@@ -1,0 +1,10 @@
+Sketch first records analog data at predefined sampling rate and writes to SD card
+When completed, GPS is read, print to separate data file
+When completed, Sensors are read, print to data file
+
+Note, currently not working properly, GPS problems (02-Oct-2020)
+
+Note, edited version of LowLatencyLogger:
+- removed 'serial talk'
+- instrument now immediately starts recording
+
