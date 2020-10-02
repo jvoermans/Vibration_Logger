@@ -1,0 +1,3 @@
+Sketch prints latest GPS data
+If GPS fix, or no GPS fix after a while, move on to reading temperature and pressure sensor
+Print data in text file
