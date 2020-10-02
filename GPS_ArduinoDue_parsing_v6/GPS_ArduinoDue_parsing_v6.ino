@@ -34,6 +34,9 @@ Adafruit_GPS GPS(&mySerial);
 boolean usingInterrupt = false;
 void useInterrupt(boolean); // Func prototype keeps Arduino 0023 happy
 
+//==============================================================================
+// Constants for Environmental Sensors
+//==============================================================================
 
 int conn = 0;
 int no_conn = 0;
@@ -47,6 +50,11 @@ float T1min;
 float T1max;
 float T2;
 float P1;
+unsigned long timecounter;
+
+//==============================================================================
+// Include details Environmental Sensors
+//==============================================================================
 
 #include <Arduino.h>
 #include <Wire.h>
@@ -55,6 +63,7 @@ TSYS01 sensorT;
 #include "MS5837.h"
 MS5837 sensorP;
 
+// Control I2C Bus
 void TCA9548A(uint8_t bus)
 {
   Wire.beginTransmission(0x70);  // TCA9548A address is 0x70
@@ -63,13 +72,14 @@ void TCA9548A(uint8_t bus)
 }
 
 
+// SD card
 #include <SPI.h>
 #include <SD.h>
-
-unsigned long timecounter;
 File myFile;
 
 
+
+//==============================================================================
 void setup()  
 {
     
@@ -111,12 +121,8 @@ void setup()
   // Ask for firmware version
   mySerial.println(PMTK_Q_RELEASE);
 
-
-
-
-
-
-
+//-------------------------------------
+// SD card
 
 Serial.print("Initializing SD card...");
 
@@ -137,15 +143,8 @@ Serial.print("Initializing SD card...");
   }
   myFile.close();
 
-
-
-
-
-
-
-
-
-
+//-------------------------------------
+// Sensors
 
   Wire.begin();
 
@@ -153,18 +152,15 @@ Serial.print("Initializing SD card...");
   sensorP.init();
   sensorP.setModel(MS5837::MS5837_02BA);
 
+// Control I2C bus
   pinMode(13, OUTPUT);
+  digitalWrite(13, LOW);
 //  pinMode(12, OUTPUT);
 //  digitalWrite(12, HIGH);
-  digitalWrite(13, LOW);
-
-
-
-
-
-
-  
+ 
 }
+
+//==============================================================================
 
 #ifdef __AVR__
 // Interrupt is called once a millisecond, looks for any new GPS data, and stores it
@@ -194,9 +190,17 @@ void useInterrupt(boolean v) {
 }
 #endif //#ifdef__AVR__
 
+//==============================================================================
+
 uint32_t timer = millis();
+
+//==============================================================================
 void loop()                     // run over and over again
 {
+  
+//-------------------------------------
+// GPS
+
   // in case you are not using the interrupt above, you'll
   // need to 'hand query' the GPS, not suggested :(
   if (! usingInterrupt) {
@@ -220,6 +224,10 @@ void loop()                     // run over and over again
 
   // if millis() or timer wraps around, we'll just reset it
   if (timer > millis())  timer = millis();
+
+
+//-------------------------------------
+// Serial print GPS data
 
   // approximately every 2 seconds or so, print out the current stats
   if (millis() - timer > 2000) { 
@@ -249,9 +257,12 @@ void loop()                     // run over and over again
       }
   }
 
+
+//-------------------------------------
+// If connection>3 or no_connection>10, accept latest GPS data, move on to sensors
+
   if (conn > 3 || no_conn > 10) {
 //    digitalWrite(12, LOW);
-
 
     myFile = SD.open("DATAFILE.txt", FILE_WRITE);
       myFile.print("Time: ");
@@ -269,7 +280,10 @@ void loop()                     // run over and over again
     
     delay(10);
     digitalWrite(13, HIGH);
-    
+
+
+    // Initialize I2C bus for environmental sensors
+    // Note, if not initialized here, sensors don't work
     TCA9548A(0);
     sensorT.init();
     TCA9548A(1);
@@ -279,6 +293,8 @@ void loop()                     // run over and over again
     tT2 = 0;
     tP1 = 0;
     count_ave = 0;
+
+    // Count mean, minimum and maximum over 5 measurements
     while (count_ave < 5) {
 
       TCA9548A(0);
@@ -308,6 +324,9 @@ void loop()                     // run over and over again
       Serial.println(count_ave);
       delay(1000);
     }
+
+    //Print sensor data
+
     Serial.print("Temperature: ");
     Serial.print(tT1/count_ave); 
     Serial.print(" deg C; ");
@@ -336,8 +355,6 @@ void loop()                     // run over and over again
       myFile.print(", ");
       myFile.println(tP1/count_ave);
       myFile.close();
-
-      
 
     delay(1000);
     digitalWrite(13, LOW);
