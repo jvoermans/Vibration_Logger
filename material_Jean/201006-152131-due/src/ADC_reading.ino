@@ -5,8 +5,11 @@
 // ---------------------------------------------------------------------
 
 // sample rate in Hz
-// #define SampleRate  (10) // my modif
 constexpr int SampleRate = 10;
+
+// size of the data buffers "in time"
+// i.e. how many consecutive measurements we buffer for each channel
+constexpr size_t SizeBuffer = 5;
 
 // the channels to read
 // for a mapping, see: https://components101.com/microcontrollers/arduino-due
@@ -19,13 +22,13 @@ constexpr int SampleRate = 10;
 //      A6    AD1
 //      A7    AD0
 constexpr uint8_t channels[] = {7, 6, 5, 4, 3};
-// #define nchannels (sizeof(channels)) // my modif
 constexpr int nchannels = sizeof(channels);
-// uint16_t Buf[nchannels]; // my modif
-volatile uint16_t Buf[nchannels];
+volatile uint16_t Buf[SizeBuffer][nchannels];
 
 // whether a full vector of conversions is available
-volatile boolean FlagConversion;
+volatile bool FlagConversion = false;
+// where we are on the SizeBuffer filling
+volatile size_t CrrtBufferFilling = 0;
 
 void setup()
 {
@@ -41,11 +44,14 @@ void loop()
     FlagConversion = false;
     for (int i = 0; i < nchannels; i++)
     {
-      Serial.print(" ADC ");
-      Serial.print(channels[i]);
-      Serial.print(" = ");
-      Serial.print(Buf[i]);
-      Serial.println();
+      for (size_t j = 0; j < SizeBuffer; j++)
+      {
+        Serial.print(" ADC ");
+        Serial.print(channels[i]);
+        Serial.print(" = ");
+        Serial.print(Buf[j][i]);
+        Serial.println();
+      }
     }
   }
 }
@@ -54,6 +60,7 @@ void loop()
 // be triggered by the clock rising edge
 // perform ADC conversion on several channels in a row
 // report finished conversion using ADC interrupt
+// this implies that the ADC is used and analogRead etc should not be called otherwise this stops
 void adc_setup() {
 
   PMC->PMC_PCER1 |= PMC_PCER1_PID37;                     // ADC power on
@@ -76,6 +83,7 @@ void adc_setup() {
 // use time counter 0 channel 2 to generate the ADC start of conversion signal
 // i.e. this sets a rising edge with the right frequency for performing the conversions
 // for more information about the timers: https://github.com/ivanseidel/DueTimer/blob/master/TimerCounter.md
+// this uses Time Counter 0 channel 2
 void tc_setup() {
   PMC->PMC_PCER0 |= PMC_PCER0_PID29;                       // TC2 power ON : Timer Counter 0 channel 2 IS TC2
   TC0->TC_CHANNEL[2].TC_CMR = TC_CMR_TCCLKS_TIMER_CLOCK2   // MCK/8, clk on rising edge
@@ -93,8 +101,33 @@ void tc_setup() {
 void ADC_Handler() {
   for (int i = 0; i < nchannels; i++)
   {
-      Buf[i] = (volatile uint16_t) * (ADC->ADC_CDR + channels[i]); // my modification
-      // Buf[i] = reinterpret_cast<volatile uint16_t *>(ADC->ADC_CDR + channels[i]);
+      Buf[CrrtBufferFilling][i] = static_cast<volatile uint16_t>( * (ADC->ADC_CDR + channels[i]) & 0x0FFFF );
   }
-   FlagConversion = true;
+
+  CrrtBufferFilling = (CrrtBufferFilling + 1) % SizeBuffer;
+
+  if 
+  FlagConversion = true;
 }
+
+
+// TODO:
+// take care of:
+// instead of a flag, use an int to say when to read and where; -1: do not read; >0: where to start reading.
+// put conversion flag when the half buffer has been filled
+// provide some function to access the current first index of the buffer to read
+
+// TODO:
+// make naming conventions homogeneous
+
+// TODO:
+// consider wrapping in a class, or at least moving to a separate file
+
+// TODO:
+// test / check that able to successfully run and log channels
+
+// TODO:
+// add writing to SD card
+// https://forum.arduino.cc/index.php?topic=462059.0
+// https://forum.arduino.cc/index.php?topic=229731.0
+// https://forum.arduino.cc/index.php?topic=232914.msg1679019#msg1679019
