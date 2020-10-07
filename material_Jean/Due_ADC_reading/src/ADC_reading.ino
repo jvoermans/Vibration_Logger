@@ -210,8 +210,9 @@ void ADC_Handler()
 // increase the value of the pre-scaler until not working any longer
 
 // TODO on other extended scripts
-// TODO: 10 bytes header on each 512 bytes SD card segment
-// 1 byte type, 1 byte channel number, 4 bytes micros at start, 4 bytes micro at write
+// 512 bytes data for each channel as buffer (double to make sure ok with race conditions)
+// TODO: 12 bytes header on each 512 bytes SD card segment, data comes only after
+// 1 byte type, 1 byte channel number, 4 bytes micros at start, 4 bytes micro at write, 2 bytes non used
 // TODO: micro at start should be set from the ADC_handler
 // TODO: micro at write should be set at the writing
 
