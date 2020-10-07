@@ -68,78 +68,6 @@ constexpr bool print_reduced_time_stats = true;
 constexpr bool print_time_stats = true;
 constexpr bool print_full_buffer = true;
 
-void setup()
-{
-  Serial.begin(115200);
-  adc_setup();
-  tc_setup();
-}
-
-void loop()
-{
-  if (adc_flag_conversion == true)
-  {
-    adc_flag_conversion = false;
-
-    if (print_reduced_time_stats)
-    {
-      nbr_readings_since_reduced_time_stats += 1;
-
-      if (nbr_readings_since_reduced_time_stats == adc_sample_rate)
-      {
-        current_reduced_time_stats_us = micros();
-        delta_reduced_time_stats_us_as_s = static_cast<float>(current_reduced_time_stats_us - previous_reduced_time_stats_us) / 1000000.0;
-        effective_logging_frequency = static_cast<float>(adc_sample_rate) / delta_reduced_time_stats_us_as_s;
-        previous_reduced_time_stats_us = current_reduced_time_stats_us;
-
-        Serial.print(F("Effective logging frequency over 1 second: "));
-        Serial.println(effective_logging_frequency);
-
-        nbr_readings_since_reduced_time_stats = 0;
-      }
-    }
-
-    if (print_time_stats)
-    {
-      current_us = micros();
-
-      delta_us = current_us - previous_us;
-      delta_us_as_s = static_cast<float>(delta_us) / 1000000.0;
-      delta_us_as_ms = static_cast<float>(delta_us) / 1000.0;
-
-      Serial.println(F("ADC avail at uS"));
-      Serial.println(micros());
-      Serial.println(F("elapsed us"));
-      Serial.println(delta_us);
-      Serial.println(F("elapsed ms"));
-      Serial.println(delta_us_as_ms);
-      Serial.println(F("elapsed s"));
-      Serial.println(delta_us_as_s);
-      Serial.println(F("updated idx:"));
-      Serial.println((crrt_adc_meas_buffer_idx - 1) % adc_buffer_nbr_consec_meas);
-
-      previous_us = current_us;
-    }
-
-    if (print_full_buffer)
-    {
-      for (size_t i = 0; i < nbr_adc_channels; i++)
-      {
-        Serial.print(F(" ADC "));
-        Serial.print(adc_channels[i]);
-        Serial.println(F(" meas in time:"));
-
-        for (size_t j = 0; j < adc_buffer_nbr_consec_meas; j++)
-        {
-          Serial.print(adc_meas_buffer[j][i]);
-          Serial.print(F(" "));
-        }
-        Serial.println();
-      }
-    }
-  }
-}
-
 // start ADC conversion on rising edge on time counter 0 channel 2
 // perform ADC conversion on several adc_channels in a row one after the other
 // report finished conversion using ADC interrupt
@@ -232,3 +160,77 @@ void ADC_Handler()
 // https://forum.arduino.cc/index.php?topic=462059.0
 // https://forum.arduino.cc/index.php?topic=229731.0
 // https://forum.arduino.cc/index.php?topic=232914.msg1679019#msg1679019
+
+void setup()
+{
+  Serial.begin(115200);
+  delay(100);
+
+  adc_setup();
+  tc_setup();
+}
+
+void loop()
+{
+  if (adc_flag_conversion == true)
+  {
+    adc_flag_conversion = false;
+
+    if (print_reduced_time_stats)
+    {
+      nbr_readings_since_reduced_time_stats += 1;
+
+      if (nbr_readings_since_reduced_time_stats == adc_sample_rate)
+      {
+        current_reduced_time_stats_us = micros();
+        delta_reduced_time_stats_us_as_s = static_cast<float>(current_reduced_time_stats_us - previous_reduced_time_stats_us) / 1000000.0;
+        effective_logging_frequency = static_cast<float>(adc_sample_rate) / delta_reduced_time_stats_us_as_s;
+        previous_reduced_time_stats_us = current_reduced_time_stats_us;
+
+        Serial.print(F("Effective logging frequency over 1 second: "));
+        Serial.println(effective_logging_frequency);
+
+        nbr_readings_since_reduced_time_stats = 0;
+      }
+    }
+
+    if (print_time_stats)
+    {
+      current_us = micros();
+
+      delta_us = current_us - previous_us;
+      delta_us_as_s = static_cast<float>(delta_us) / 1000000.0;
+      delta_us_as_ms = static_cast<float>(delta_us) / 1000.0;
+
+      Serial.println(F("ADC avail at uS"));
+      Serial.println(micros());
+      Serial.println(F("elapsed us"));
+      Serial.println(delta_us);
+      Serial.println(F("elapsed ms"));
+      Serial.println(delta_us_as_ms);
+      Serial.println(F("elapsed s"));
+      Serial.println(delta_us_as_s);
+      Serial.println(F("updated idx:"));
+      Serial.println((crrt_adc_meas_buffer_idx - 1) % adc_buffer_nbr_consec_meas);
+
+      previous_us = current_us;
+    }
+
+    if (print_full_buffer)
+    {
+      for (size_t i = 0; i < nbr_adc_channels; i++)
+      {
+        Serial.print(F(" ADC "));
+        Serial.print(adc_channels[i]);
+        Serial.println(F(" meas in time:"));
+
+        for (size_t j = 0; j < adc_buffer_nbr_consec_meas; j++)
+        {
+          Serial.print(adc_meas_buffer[j][i]);
+          Serial.print(F(" "));
+        }
+        Serial.println();
+      }
+    }
+  }
+}
