@@ -29,3 +29,8 @@ void loop() {
   delay(500);
   increment_file_number();
 }
+
+// TODO
+// check persistent file numbering
+// set up raw writing with "old" SD library
+// test of speed / latency / consistency: write 5 x 1kHz equivalent, 5 x 10kHz equivalent with increasing values for test
