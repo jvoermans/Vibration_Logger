@@ -1,24 +1,32 @@
-// this is for Arduino Due only!
 
-// the interrupt based ADC measurement is adapted from : https://forum.arduino.cc/index.php?topic=589213.0
-// i.e. adc_setup(), tc_setup(), ADC_handler()
-
+// TODO: clean this note
 // some notes about SD cards
 // a nice testing: https://jitter.company/blog/2019/07/31/microsd-performance-on-memory-constrained-devices/
 // some in depth intro: https://www.parallax.com/sites/default/files/downloads/AN006-SD-FFS-Drivers-v1.0.pdf
 
-// ---------------------------------------------------------------------
-// interrupt driven ADC convertion on n adc_channels for Arduino Due
-// ---------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+// timer driven ADC convertion captured by interrupt on n adc_channels for Arduino Due
+//
+// this is for Arduino Due only!
+//
+// the interrupt based ADC measurement is adapted from:
+// https://forum.arduino.cc/index.php?topic=589213.0
+// i.e. adc_setup(), tc_setup(), ADC_handler() are inspired from the discussion there.
+//
+// written with VSCode + Platformio and Due board setup
+// -------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
 
-#include "Arduino.h" // make my linter happy
+// make my linter happy
+#include "Arduino.h"
 
-// sample rate in Hz
+// sample rate in Hz, should be able to go up to several 10s ok kHz at least
 constexpr int adc_sample_rate = 1;
 
 // size of the data buffers "in time"
 // i.e. how many consecutive measurements we buffer for each channel
-constexpr size_t adc_buffer_nbr_consec_meas= 5;
+constexpr size_t adc_buffer_nbr_consec_meas = 5;
 
 // the adc_channels to read, in uC reference, NOT in Arduino Due pinout reference
 // for a mapping, see: https://components101.com/microcontrollers/arduino-due
@@ -42,6 +50,24 @@ volatile bool adc_flag_conversion = false;
 // time index of the current measurement in the adc reads buffer
 volatile size_t crrt_adc_meas_buffer_idx = 0;
 
+// a bit of time tracking, just to analyze how good performance
+unsigned long current_us = 0;
+unsigned long previous_us = 0;
+unsigned long delta_us = 0;
+float delta_us_as_s = 0;
+float delta_us_as_ms = 0;
+
+int nbr_readings_since_reduced_time_stats = 0;
+unsigned long current_reduced_time_stats_us = 0;
+unsigned long previous_reduced_time_stats_us = 0;
+float delta_reduced_time_stats_us_as_s = 0;
+float effective_logging_frequency = 0;
+
+// decide what to print on serial
+constexpr bool print_reduced_time_stats = true;
+constexpr bool print_time_stats = true;
+constexpr bool print_full_buffer = true;
+
 void setup()
 {
   Serial.begin(115200);
@@ -55,23 +81,61 @@ void loop()
   {
     adc_flag_conversion = false;
 
-    Serial.println(F("ADC avail at uS:"));
-    Serial.println(micros());
-    Serial.println(F("updated reading idx:"));
-    Serial.println((crrt_adc_meas_buffer_idx - 1) % adc_buffer_nbr_consec_meas);
-
-    for (size_t i = 0; i < nbr_adc_channels; i++)
+    if (print_reduced_time_stats)
     {
-      Serial.print(F(" ADC "));
-      Serial.print(adc_channels[i]);
-      Serial.println(F(" meas in time:"));
+      nbr_readings_since_reduced_time_stats += 1;
 
-      for (size_t j = 0; j < adc_buffer_nbr_consec_meas; j++)
+      if (nbr_readings_since_reduced_time_stats == adc_sample_rate)
       {
-        Serial.print(adc_meas_buffer[j][i]);
-        Serial.print(F(" "));
+        current_reduced_time_stats_us = micros();
+        delta_reduced_time_stats_us_as_s = static_cast<float>(current_reduced_time_stats_us - previous_reduced_time_stats_us) / 1000000.0;
+        effective_logging_frequency = static_cast<float>(adc_sample_rate) / delta_reduced_time_stats_us_as_s;
+        previous_reduced_time_stats_us = current_reduced_time_stats_us;
+
+        Serial.print(F("Effective logging frequency over 1 second: "));
+        Serial.println(effective_logging_frequency);
+
+        nbr_readings_since_reduced_time_stats = 0;
       }
-      Serial.println();
+    }
+
+    if (print_time_stats)
+    {
+      current_us = micros();
+
+      delta_us = current_us - previous_us;
+      delta_us_as_s = static_cast<float>(delta_us) / 1000000.0;
+      delta_us_as_ms = static_cast<float>(delta_us) / 1000.0;
+
+      Serial.println(F("ADC avail at uS"));
+      Serial.println(micros());
+      Serial.println(F("elapsed us"));
+      Serial.println(delta_us);
+      Serial.println(F("elapsed ms"));
+      Serial.println(delta_us_as_ms);
+      Serial.println(F("elapsed s"));
+      Serial.println(delta_us_as_s);
+      Serial.println(F("updated idx:"));
+      Serial.println((crrt_adc_meas_buffer_idx - 1) % adc_buffer_nbr_consec_meas);
+
+      previous_us = current_us;
+    }
+
+    if (print_full_buffer)
+    {
+      for (size_t i = 0; i < nbr_adc_channels; i++)
+      {
+        Serial.print(F(" ADC "));
+        Serial.print(adc_channels[i]);
+        Serial.println(F(" meas in time:"));
+
+        for (size_t j = 0; j < adc_buffer_nbr_consec_meas; j++)
+        {
+          Serial.print(adc_meas_buffer[j][i]);
+          Serial.print(F(" "));
+        }
+        Serial.println();
+      }
     }
   }
 }
@@ -80,13 +144,15 @@ void loop()
 // perform ADC conversion on several adc_channels in a row one after the other
 // report finished conversion using ADC interrupt
 // TODO: check the value of the pre-scalor
-void adc_setup() {
-  PMC->PMC_PCER1 |= PMC_PCER1_PID37;                     // ADC power on
-  ADC->ADC_CR = ADC_CR_SWRST;                            // Reset ADC
-  ADC->ADC_MR |=  ADC_MR_TRGEN_EN |                      // Hardware trigger select
-                  ADC_MR_PRESCAL(1) |                    // the pre-scaler: as high as possible for better accuracy, while still fast enough to measure everything
-                                                         // see: https://arduino.stackexchange.com/questions/12723/how-to-slow-adc-clock-speed-to-1mhz-on-arduino-due
-                  ADC_MR_TRGSEL_ADC_TRIG3;               // Trigger by TIOA2 Rising edge
+void adc_setup()
+{
+  PMC->PMC_PCER1 |= PMC_PCER1_PID37;      // ADC power on
+  ADC->ADC_CR = ADC_CR_SWRST;             // Reset ADC
+  ADC->ADC_MR |= ADC_MR_TRGEN_EN |        // Hardware trigger select
+                 ADC_MR_PRESCAL(1) |      // the pre-scaler: as high as possible for better accuracy, while still fast enough to measure everything
+                                          // see: https://arduino.stackexchange.com/questions/12723/how-to-slow-adc-clock-speed-to-1mhz-on-arduino-due
+                                          // unclear, asked: https://stackoverflow.com/questions/64243073/setting-right-adc-prescaler-on-the-arduino-due-in-timer-and-interrupt-driven-mul
+                 ADC_MR_TRGSEL_ADC_TRIG3; // Trigger by TIOA2 Rising edge
 
   ADC->ADC_IDR = ~(0ul);
   ADC->ADC_CHDR = ~(0ul);
@@ -95,24 +161,25 @@ void adc_setup() {
     ADC->ADC_CHER |= ADC_CHER_CH0 << adc_channels[i];
   }
   ADC->ADC_IER |= ADC_IER_EOC0 << adc_channels[nbr_adc_channels - 1];
-  ADC->ADC_PTCR |= ADC_PTCR_RXTDIS | ADC_PTCR_TXTDIS;    // Disable PDC DMA
-  NVIC_EnableIRQ(ADC_IRQn);                              // Enable ADC interrupt
+  ADC->ADC_PTCR |= ADC_PTCR_RXTDIS | ADC_PTCR_TXTDIS; // Disable PDC DMA
+  NVIC_EnableIRQ(ADC_IRQn);                           // Enable ADC interrupt
 }
 
 // use time counter 0 channel 2 to generate the ADC start of conversion signal
 // i.e. this sets a rising edge with the right frequency for triggering ADC conversions corresponding to adc_sample_rate
 // for more information about the timers: https://github.com/ivanseidel/DueTimer/blob/master/TimerCounter.md
 // NOTE: TIOA2 should not be available on any due pin https://github.com/ivanseidel/DueTimer/issues/11
-void tc_setup() {
-  PMC->PMC_PCER0 |= PMC_PCER0_PID29;                       // TC2 power ON : Timer Counter 0 channel 2 IS TC2
-  TC0->TC_CHANNEL[2].TC_CMR = TC_CMR_TCCLKS_TIMER_CLOCK2   // clock 2 has frequency MCK/8, clk on rising edge
-                              | TC_CMR_WAVE                // Waveform mode
-                              | TC_CMR_WAVSEL_UP_RC        // UP mode with automatic trigger on RC Compare
-                              | TC_CMR_ACPA_CLEAR          // Clear TIOA2 on RA compare match
-                              | TC_CMR_ACPC_SET;           // Set TIOA2 on RC compare match
+void tc_setup()
+{
+  PMC->PMC_PCER0 |= PMC_PCER0_PID29;                     // TC2 power ON : Timer Counter 0 channel 2 IS TC2
+  TC0->TC_CHANNEL[2].TC_CMR = TC_CMR_TCCLKS_TIMER_CLOCK2 // clock 2 has frequency MCK/8, clk on rising edge
+                              | TC_CMR_WAVE              // Waveform mode
+                              | TC_CMR_WAVSEL_UP_RC      // UP mode with automatic trigger on RC Compare
+                              | TC_CMR_ACPA_CLEAR        // Clear TIOA2 on RA compare match
+                              | TC_CMR_ACPC_SET;         // Set TIOA2 on RC compare match
 
   constexpr int ticks_per_sample = F_CPU / 8 / adc_sample_rate; // F_CPU / 8 is the timer clock frequency, see MCK/8 setup
-  constexpr int ticks_duty_cycle = ticks_per_sample / 2; // duty rate up vs down ticks over timer cycle; use 50%
+  constexpr int ticks_duty_cycle = ticks_per_sample / 2;        // duty rate up vs down ticks over timer cycle; use 50%
   TC0->TC_CHANNEL[2].TC_RC = ticks_per_sample;
   TC0->TC_CHANNEL[2].TC_RA = ticks_duty_cycle;
 
@@ -123,10 +190,11 @@ void tc_setup() {
 // push the current ADC data on all adc_channels to the buffer
 // update the time index
 // set flag conversion ready
-void ADC_Handler() {
+void ADC_Handler()
+{
   for (size_t i = 0; i < nbr_adc_channels; i++)
   {
-      adc_meas_buffer[crrt_adc_meas_buffer_idx][i] = static_cast<volatile uint16_t>( * (ADC->ADC_CDR + adc_channels[i]) & 0x0FFFF );
+    adc_meas_buffer[crrt_adc_meas_buffer_idx][i] = static_cast<volatile uint16_t>(*(ADC->ADC_CDR + adc_channels[i]) & 0x0FFFF);
   }
 
   crrt_adc_meas_buffer_idx = (crrt_adc_meas_buffer_idx + 1) % adc_buffer_nbr_consec_meas;
@@ -138,8 +206,10 @@ void ADC_Handler() {
 // get good readings
 // no cross talks in ADC conversions
 // update is ok across all channels
-// works at higher frequency (check 1kHz, 10kHz)
+// works at higher frequency (check 10Hz, 100Hz, 1kHz, 10kHz)
+// increase the value of the pre-scaler until not working any longer
 
+// TODO on other extended scripts
 // TODO: 10 bytes header on each 512 bytes SD card segment
 // 1 byte type, 1 byte channel number, 4 bytes micros at start, 4 bytes micro at write
 // TODO: micro at start should be set from the ADC_handler
