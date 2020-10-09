@@ -1,9 +1,3 @@
-
-// TODO: clean this note
-// some notes about SD cards
-// a nice testing: https://jitter.company/blog/2019/07/31/microsd-performance-on-memory-constrained-devices/
-// some in depth intro: https://www.parallax.com/sites/default/files/downloads/AN006-SD-FFS-Drivers-v1.0.pdf
-
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 // timer driven ADC convertion captured by interrupt on n adc_channels for Arduino Due
@@ -20,6 +14,11 @@
 
 // make my linter happy
 #include "Arduino.h"
+
+//--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
+
+// some vital ADC grabbing setup
 
 // sample rate in Hz, should be able to go up to several 10s ok kHz at least
 constexpr int adc_sample_rate = 1;
@@ -50,6 +49,11 @@ volatile bool adc_flag_conversion = false;
 // time index of the current measurement in the adc reads buffer
 volatile size_t crrt_adc_meas_buffer_idx = 0;
 
+//--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
+
+// some non-vital printing config
+
 // a bit of time tracking, just to analyze how good performance
 unsigned long current_us = 0;
 unsigned long previous_us = 0;
@@ -67,6 +71,11 @@ float effective_logging_frequency = 0;
 constexpr bool print_reduced_time_stats = true;
 constexpr bool print_time_stats = true;
 constexpr bool print_full_buffer = true;
+
+//--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
+
+// low level functions for setting clock and ADC
 
 // start ADC conversion on rising edge on time counter 0 channel 2
 // perform ADC conversion on several adc_channels in a row one after the other
@@ -130,36 +139,18 @@ void ADC_Handler()
   adc_flag_conversion = true;
 }
 
-// TODO: test
+// TODO: tests:
 // get good readings
 // no cross talks in ADC conversions
 // update is ok across all channels
 // works at higher frequency (check 10Hz, 100Hz, 1kHz, 10kHz)
-// increase the value of the pre-scaler until not working any longer
 
-// TODO on other extended scripts
-// 512 bytes data for each channel as buffer (double to make sure ok with race conditions)
-// TODO: 12 bytes header on each 512 bytes SD card segment, data comes only after
-// 1 byte type, 1 byte channel number, 4 bytes micros at start, 4 bytes micro at write, 2 bytes non used
-// TODO: micro at start should be set from the ADC_handler
-// TODO: micro at write should be set at the writing
+// TODO: increase the value of the pre-scaler until not working any longer
 
-// TODO:
-// take care of:
-// instead of a flag, use an int to say when to read and where; -1: do not read; >0: where to start reading.
-// put conversion flag when the half buffer has been filled
-// provide some function to access the current first index of the buffer to read
+//--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
 
-// TODO:
-// test / check that able to successfully run and log adc_channels
-
-// TODO: write header
-
-// TODO:
-// add writing to SD card
-// https://forum.arduino.cc/index.php?topic=462059.0
-// https://forum.arduino.cc/index.php?topic=229731.0
-// https://forum.arduino.cc/index.php?topic=232914.msg1679019#msg1679019
+// a simple script: setup and print information
 
 void setup()
 {
@@ -211,7 +202,14 @@ void loop()
       Serial.println(F("elapsed s"));
       Serial.println(delta_us_as_s);
       Serial.println(F("updated idx:"));
-      Serial.println((crrt_adc_meas_buffer_idx - 1) % adc_buffer_nbr_consec_meas);
+      size_t last_modified_buffer_idx;
+      if (crrt_adc_meas_buffer_idx > 0){
+        last_modified_buffer_idx = crrt_adc_meas_buffer_idx - 1;
+      }
+      else{
+        last_modified_buffer_idx = nbr_adc_channels - 1;
+      }
+      Serial.println(last_modified_buffer_idx);
 
       previous_us = current_us;
     }
