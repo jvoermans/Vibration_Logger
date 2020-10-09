@@ -1,0 +1,3 @@
+[submodule "material_Jean/Due_SD_raw_writing/lib/DueFlashStorage"]
+	path = material_Jean/Due_SD_raw_writing/lib/DueFlashStorage
+	url = git@github.com:sebnil/DueFlashStorage.git
