@@ -63,5 +63,19 @@ void loop() {
 
 // TODO
 // check persistent file numbering
-// set up raw writing with "old" SD library
+
+// TODO
+// set up raw writing with "beta" SD library; if does not work, use "old" library
+// write for 1 minute per file and then new file
+// write in chunks of 512 bytes
 // test of speed / latency / consistency: write 5 x 1kHz equivalent, 5 x 10kHz equivalent with increasing values for test
+
+// TODO
+// check power resets and how affects
+// may need to detect power loss and stop recording on SD card then
+// i.e.: raw power supply -> 3.3V supply -> supercap -> Arduino Due
+//          |
+//          ---> measure voltage: if falls under 2.7V, stop the recording
+
+// TODO
+// use SD card library v 1 vs v2 beta

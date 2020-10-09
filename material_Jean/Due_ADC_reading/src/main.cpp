@@ -178,7 +178,7 @@ void loop()
         effective_logging_frequency = static_cast<float>(adc_sample_rate) / delta_reduced_time_stats_us_as_s;
         previous_reduced_time_stats_us = current_reduced_time_stats_us;
 
-        Serial.print(F("Effective logging frequency over number of samples that should correspond to 1 second: "));
+        Serial.print(F("Effective logging freq over nbr spls that should correspond to 1 second: "));
         Serial.println(effective_logging_frequency);
 
         nbr_readings_since_reduced_time_stats = 0;
