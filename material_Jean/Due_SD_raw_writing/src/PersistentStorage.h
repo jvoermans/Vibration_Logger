@@ -23,7 +23,7 @@ uint32_t get_file_number(){
         due_flash_storage.write(address_flash_started, 0);
 
         for (uint32_t i = 0; i < 4; i++){
-            due_flash_storage.write(address_flash_started + i, 0);
+            due_flash_storage.write(address_flash_start_filenbr + i, 0);
         }
     }
 

@@ -35,15 +35,6 @@
 
 #include <PersistentStorage.h>
 
-#include <SPI.h>
-#include "SdFat.h"
-
-// SD card configuration
-constexpr unsigned int sd_slave_select = 53;
-SdFat sd;
-SdFile sd_file;
-
-
 
 void setup() {
   Serial.begin(115200);
