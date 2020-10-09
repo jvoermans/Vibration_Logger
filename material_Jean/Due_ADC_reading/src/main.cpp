@@ -21,7 +21,7 @@
 // some vital ADC grabbing setup
 
 // sample rate in Hz, should be able to go up to several 10s ok kHz at least
-constexpr int adc_sample_rate = 1;
+constexpr int adc_sample_rate = 1000;
 
 // size of the data buffers "in time"
 // i.e. how many consecutive measurements we buffer for each channel
@@ -69,8 +69,8 @@ float effective_logging_frequency = 0;
 
 // decide what to print on serial
 constexpr bool print_reduced_time_stats = true;
-constexpr bool print_time_stats = true;
-constexpr bool print_full_buffer = true;
+constexpr bool print_time_stats = false;
+constexpr bool print_full_buffer = false;
 
 //--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
@@ -80,13 +80,33 @@ constexpr bool print_full_buffer = true;
 // start ADC conversion on rising edge on time counter 0 channel 2
 // perform ADC conversion on several adc_channels in a row one after the other
 // report finished conversion using ADC interrupt
-// TODO: check the value of the pre-scalor
+
+// tests about pre-scaler: formula should be: 
+// pre-scalor analysis using 5 channels:
+// --------------------
+// 100kHz ps 1 ok
+// 100kHz ps 2 ok
+// 100kHz ps 3 fail
+// 100kHz ps 255 fail
+// 100kHz ps 256 ok
+// this indicates: prescaler is 8 bits from 0 to 255, after this wraps up
+// ADC frequency is max something like 1MHz in practice: 5 * 100 * 2 (may loose a bit
+// due to other interrupts hitting ours?)
+// --------------------
+// 10kHz ps 38 ok
+// 10kHz ps 39 fail
+// 10 * 5 * 40 = 2000kHz: ADC is lower than 2MHz
+// --------------------
+// 1kHz ps 255 ok
+// --------------------
+// CCL: use ps 2 at 100kHz with 5 channels,  20 at 10kHz, 200 at 1kHz
+// TODO: discuss on an issue
 void adc_setup()
 {
   PMC->PMC_PCER1 |= PMC_PCER1_PID37;      // ADC power on
   ADC->ADC_CR = ADC_CR_SWRST;             // Reset ADC
   ADC->ADC_MR |= ADC_MR_TRGEN_EN |        // Hardware trigger select
-                 ADC_MR_PRESCAL(1) |      // the pre-scaler: as high as possible for better accuracy, while still fast enough to measure everything
+                 ADC_MR_PRESCAL(200) |    // the pre-scaler: as high as possible for better accuracy, while still fast enough to measure everything
                                           // see: https://arduino.stackexchange.com/questions/12723/how-to-slow-adc-clock-speed-to-1mhz-on-arduino-due
                                           // unclear, asked: https://stackoverflow.com/questions/64243073/setting-right-adc-prescaler-on-the-arduino-due-in-timer-and-interrupt-driven-mul
                  ADC_MR_TRGSEL_ADC_TRIG3; // Trigger by TIOA2 Rising edge
@@ -138,14 +158,6 @@ void ADC_Handler()
 
   adc_flag_conversion = true;
 }
-
-// TODO: tests:
-// get good readings
-// no cross talks in ADC conversions
-// update is ok across all channels
-// works at higher frequency (check 10Hz, 100Hz, 1kHz, 10kHz)
-
-// TODO: increase the value of the pre-scaler until not working any longer
 
 //--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
