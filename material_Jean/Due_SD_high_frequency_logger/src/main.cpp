@@ -35,6 +35,8 @@
 
 #include <PersistentStorage.h>
 
+PersistentStorage persistent_storage = PersistentStorage();
+
 
 void setup() {
   Serial.begin(115200);
@@ -44,12 +46,12 @@ void setup() {
 void loop() {
   uint32_t file_number;
 
-  file_number = get_file_number();
+  file_number = persistent_storage.get_file_number();
   Serial.print(F("got file_number:"));
   Serial.println(file_number);
 
   delay(500);
-  increment_file_number();
+  persistent_storage.increment_file_number();
 }
 
 // TODO

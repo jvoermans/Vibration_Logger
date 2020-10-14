@@ -1,3 +1,7 @@
-[submodule "material_Jean/Due_SD_raw_writing/lib/DueFlashStorage"]
-	path = material_Jean/Due_SD_raw_writing/lib/DueFlashStorage
+[submodule "material_Jean/Due_SD_persistent_memory/lib/DueFlashStorage"]
+	path = material_Jean/Due_SD_persistent_memory/lib/DueFlashStorage
+	url = git@github.com:sebnil/DueFlashStorage.git
+
+[submodule "material_Jean/Due_SD_high_frequency_logger/lib/DueFlashStorage"]
+	path = material_Jean/Due_SD_high_frequency_logger/lib/DueFlashStorage
 	url = git@github.com:sebnil/DueFlashStorage.git
