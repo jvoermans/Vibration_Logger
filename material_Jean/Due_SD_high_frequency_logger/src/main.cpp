@@ -53,13 +53,12 @@ void loop() {
 }
 
 // TODO
-// check persistent file numbering
-
-// TODO
 // set up raw writing with "beta" SD library; if does not work, use "old" library
-// write for 1 minute per file and then new file
+// write for 15 minute per file and then new file
+// think about having a 100 files per folder method
 // write in chunks of 512 bytes
 // test of speed / latency / consistency: write 5 x 1kHz equivalent, 5 x 10kHz equivalent with increasing values for test
+// write to modern format so that support large SD cards: exFat or similar? (check)
 
 // TODO
 // check power resets and how affects
@@ -68,5 +67,5 @@ void loop() {
 //          |
 //          ---> measure voltage: if falls under 2.7V, stop the recording
 
-// TODO
-// use SD card library v 1 vs v2 beta
+// TODO:
+// separate blocks for ADC channels vs "all other stuff"

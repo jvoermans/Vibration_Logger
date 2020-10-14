@@ -82,7 +82,10 @@ constexpr bool print_full_buffer = false;
 // report finished conversion using ADC interrupt
 
 // tests about pre-scaler: formula should be: 
-// pre-scalor analysis using 5 channels:
+// pre-scalor analysis using 5 channels;
+// quantities indicated are sampling frequency of the 5 channels
+// i.e. necessary ADC sampling frequency is 5 x higher, and value
+// of the prescaler ps
 // --------------------
 // 100kHz ps 1 ok
 // 100kHz ps 2 ok
@@ -100,7 +103,6 @@ constexpr bool print_full_buffer = false;
 // 1kHz ps 255 ok
 // --------------------
 // CCL: use ps 2 at 100kHz with 5 channels,  20 at 10kHz, 200 at 1kHz
-// TODO: discuss on an issue
 void adc_setup()
 {
   PMC->PMC_PCER1 |= PMC_PCER1_PID37;      // ADC power on
