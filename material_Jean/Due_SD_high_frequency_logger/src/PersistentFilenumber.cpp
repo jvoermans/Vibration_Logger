@@ -1,6 +1,6 @@
-#include "PersistentStorage.h"
+#include "PersistentFilenumber.h"
 
-uint32_t PersistentStorage::get_file_number(void){
+uint32_t PersistentFilenumber::get_file_number(void){
     uint8_t flag_started = due_flash_storage.read(address_flash_started);
 
     // if necessary, "reset" the storing: this will be at first booting
@@ -23,7 +23,7 @@ uint32_t PersistentStorage::get_file_number(void){
     return(file_nbr);
 }
 
-void PersistentStorage::increment_file_number(void){
+void PersistentFilenumber::increment_file_number(void){
     uint32_t file_number = get_file_number();
     file_number += 1;
 

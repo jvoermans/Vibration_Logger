@@ -1,10 +1,10 @@
-#ifndef PERSISTENT_STORAGE
-#define PERSISTENT_STORAGE
+#ifndef PERSISTENT_FILENUMBER
+#define PERSISTENT_FILENUMBER
 
 #include "Arduino.h"
 #include <DueFlashStorage.h>
 
-class PersistentStorage{
+class PersistentFilenumber{
     public:
         // get the filenumber to which should write next
         // if this is the first time we boot after sketch uploading, initialize to 0

@@ -31,27 +31,30 @@
 
 // perform some high speed writing to SD card
 
+// TODO: class to log ADC + "serial" logger
+
 #include <Arduino.h>
 
-#include <PersistentStorage.h>
+#include <PersistentFilenumber.h>
+#include <FastLogger.h>
 
-PersistentStorage persistent_storage = PersistentStorage();
-
+PersistentFilenumber persistent_filenumber = PersistentFilenumber();
 
 void setup() {
   Serial.begin(115200);
   delay(100);
+
 }
 
 void loop() {
   uint32_t file_number;
 
-  file_number = persistent_storage.get_file_number();
+  file_number = persistent_filenumber.get_file_number();
   Serial.print(F("got file_number:"));
   Serial.println(file_number);
 
   delay(500);
-  persistent_storage.increment_file_number();
+  persistent_filenumber.increment_file_number();
 }
 
 // TODO
