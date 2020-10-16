@@ -1,9 +1,16 @@
 #include <FastLogger.h>
 
+// TODO: truly implement / check the bool (update to op codes?) return values
+
 ////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////
 
-// TODO: put in a struct
+// TODO: put in a separate namespace
+namespace shared_ADC_data
+{
+    
+} // namespace shared_ADC_
+
 volatile bool blocks_to_write[nbr_of_adc_channels] = {false};
 
 volatile int crrt_adc_block_index_to_write = 0;
@@ -13,6 +20,9 @@ volatile BlockADCWithMetadata blocks_adc_with_metdata[nbr_of_adc_channels][nbr_b
 
 void setup_adc_buffer_metadata(){
     for (size_t crrt_adc_channel_index=0; crrt_adc_channel_index < nbr_of_adc_channels; crrt_adc_channel_index++){
+        unsigned long int crrt_micros = micros();
+        blocks_adc_with_metdata[crrt_adc_channel_index][0].metadata.micros_start = crrt_micros;
+
         for (size_t crrt_adc_block_index=0; crrt_adc_block_index < nbr_blocks_per_adc_channel; crrt_adc_block_index ++){
             blocks_adc_with_metdata[crrt_adc_channel_index][crrt_adc_block_index].metadata.metadata_id = static_cast<uint8_t>('A');
             blocks_adc_with_metdata[crrt_adc_channel_index][crrt_adc_block_index].metadata.block_number = static_cast<uint8_t>(crrt_adc_channel_index);
@@ -90,8 +100,17 @@ void ADC_Handler()
 
 // the wrapper class stuff
 
-// TODO
 bool FastLogger::start_recording(){
+    // setup the SD card
+    const uint8_t SD_CS_PIN = SS;
+    #define SD_CONFIG SdSpiConfig(SD_CS_PIN, DEDICATED_SPI)
+
+    if (!sd_object.begin(SD_CONFIG)) {
+        sd_object.initErrorHalt(&Serial);
+    }
+
+    delay(5);
+
     // create a new file
     open_new_file();
 
@@ -101,19 +120,58 @@ bool FastLogger::start_recording(){
     tc_setup();
 
     logging_is_active = true;
+
+    return true;
 }
 
-// TODO
 bool FastLogger::stop_recording(){
     logging_is_active = false;
     close_crrt_file();
+
+    return true;
 }
 
-// TODO
-void FastLogger::log_char(char crrt_char){
+void FastLogger::log_char(const char crrt_char){
     // add to char buffer
+    blocks_cstring_with_metadata[crrt_char_block_index_to_write].data[crrt_char_data_index_to_write] = crrt_char;
+    crrt_char_data_index_to_write += 1;
 
-    // if char buffer is full, write to SD card and update the indexes etc
+    // if end of block, update metadata, write to SD, update indexes etc
+    if (crrt_char_data_index_to_write >= nbr_chars_per_block){
+        unsigned long int crrt_micros = micros();
+        blocks_cstring_with_metadata[crrt_char_block_index_to_write].metadata.micros_end = crrt_micros;
+    
+        crrt_char_data_index_to_write = 0;
+        write_block_to_sd_card(&blocks_cstring_with_metadata[crrt_char_block_index_to_write]);
+
+        crrt_char_block_index_to_write = (crrt_char_block_index_to_write + 1) % nbr_blocks_char;
+        blocks_cstring_with_metadata[crrt_char_block_index_to_write].metadata.micros_start = crrt_micros;
+    }
+}
+
+void FastLogger::log_cstring(const char * cstring){
+    // log the time
+    unsigned long crrt_micros = micros();
+
+    log_char(';');
+    log_char('M');
+
+    char micros_timestamp[10];
+    sprintf(micros_timestamp, "%09lu", crrt_micros);
+    for (int i=0; i<9; i++){
+        log_char(micros_timestamp[i]);
+    }
+
+    log_char(';');
+
+    // log the data string
+    size_t i = 0;
+    while (cstring[i] != '\0'){
+        log_char(cstring[i]);
+        i++;
+    }
+
+    log_char(';');
 }
 
 void FastLogger::internal_update(){
@@ -127,6 +185,9 @@ void FastLogger::internal_update(){
             if (blocks_to_write[index_to_examine]){
                 blocks_to_write[index_to_examine] = false;
                 write_adc_blocks_to_sd_card(index_to_examine);
+                if (serial_debug_output_is_active){
+                    Serial.println(F("ADC dump"));
+                }
             }
         }
 
@@ -175,7 +236,7 @@ bool FastLogger::open_new_file(){
     persistent_filenumber.increment_file_number();
 
     // TODO: check that this is ok, possibly needs %08d instead
-    sprintf(filename, "F%08i.bin", static_cast<int>(file_number));
+    sprintf(filename, "F%08lu.bin", file_number);
 
     if (serial_debug_output_is_active){
         Serial.print(F("new filename "));

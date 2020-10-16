@@ -78,7 +78,7 @@ static_assert(sizeof(BlockCharsWithMetadata) == 512);
 //      A7    AD
 constexpr uint8_t adc_channels[] = {7, 6, 5, 4, 3};
 constexpr int adc_sampling_frequency = 1000;
-constexpr int nbr_blocks_per_adc_channel = 4;
+constexpr int nbr_blocks_per_adc_channel = 8;
 
 constexpr int nbr_of_adc_channels = sizeof(adc_channels);
 constexpr int nbr_adc_measurements_per_block = 250;
@@ -118,7 +118,11 @@ public:
     bool stop_recording();
 
     // log a char to the char block
-    void log_char(char crrt_char);
+    void log_char(const char crrt_char);
+
+    // log a cstring to the char block; this will write both the Cstring and some timestamping
+    // NOTE that the input must be a pointer to a cstring, i.e. a null terminated string!
+    void log_cstring(const char * cstring_start);
 
     // perform necessary internal requests, such as updating file number
     void internal_update();
