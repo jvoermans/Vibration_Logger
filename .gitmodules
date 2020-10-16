@@ -5,3 +5,6 @@
 [submodule "material_Jean/Due_SD_high_frequency_logger/lib/DueFlashStorage"]
 	path = material_Jean/Due_SD_high_frequency_logger/lib/DueFlashStorage
 	url = git@github.com:sebnil/DueFlashStorage.git
+[submodule "material_Jean/Due_SD_high_frequency_logger/lib/SdFat-beta"]
+	path = material_Jean/Due_SD_high_frequency_logger/lib/SdFat-beta
+	url = git@github.com:greiman/SdFat-beta.git

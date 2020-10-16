@@ -35,26 +35,24 @@
 
 #include <Arduino.h>
 
-#include <PersistentFilenumber.h>
 #include <FastLogger.h>
 
-PersistentFilenumber persistent_filenumber = PersistentFilenumber();
+FastLogger fast_logger;
+static constexpr bool use_serial_debug = true;
 
 void setup() {
-  Serial.begin(115200);
-  delay(100);
+  if (use_serial_debug){
+    Serial.begin(115200);
+    delay(100);
+  }
+
+  fast_logger.enable_serial_debug_output();
+  fast_logger.start_recording();
 
 }
 
 void loop() {
-  uint32_t file_number;
-
-  file_number = persistent_filenumber.get_file_number();
-  Serial.print(F("got file_number:"));
-  Serial.println(file_number);
-
-  delay(500);
-  persistent_filenumber.increment_file_number();
+  fast_logger.internal_update();
 }
 
 // TODO
