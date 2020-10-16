@@ -77,7 +77,8 @@ static_assert(sizeof(BlockCharsWithMetadata) == 512);
 //      A6    AD1
 //      A7    AD
 constexpr uint8_t adc_channels[] = {7, 6, 5, 4, 3};
-constexpr int adc_sampling_frequency = 1000;
+// constexpr int adc_sampling_frequency = 1000;
+constexpr int adc_sampling_frequency = 100;
 constexpr int nbr_blocks_per_adc_channel = 8;
 
 constexpr int nbr_of_adc_channels = sizeof(adc_channels);
@@ -130,17 +131,24 @@ public:
     // enable Serial debug output on the "USB" serial
     void enable_serial_debug_output();
 
+    // disable SD card, for example for testing
+    void disable_SD();
+
 private:
     // how to keep track of file numbering between reboots
     PersistentFilenumber persistent_filenumber;
 
     // a few meta properties of the logging
-    static constexpr int file_duration_seconds = 15 * 60;
+    // static constexpr int file_duration_seconds = 15 * 60;
+    static constexpr int file_duration_seconds = 15;
+
     static constexpr int file_duration_milliseconds = 1000 * file_duration_seconds;
     static constexpr int file_duration_microseconds = 1000 * file_duration_milliseconds;
     unsigned long time_opening_crrt_file = 0;
 
     bool logging_is_active = false;
+
+    bool sd_is_active = true;
 
     bool serial_debug_output_is_active = false;
 

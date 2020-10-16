@@ -3,12 +3,16 @@
 // record data in blocks of 512
 // 
 
+// set the frequency of ADC logging at FastLogger.h -> adc_sampling_frequency
+// set the duration of each file at FastLogger.h -> file_duration_seconds
+
 #include <Arduino.h>
 
 #include <FastLogger.h>
 
 FastLogger fast_logger;
 static constexpr bool use_serial_debug = true;
+static constexpr bool disable_sd_card = true;
 
 // trash, just to make sure we write a bit...
 unsigned long last_micros = 0;
@@ -21,6 +25,10 @@ void setup() {
 
   if (use_serial_debug){
     fast_logger.enable_serial_debug_output();
+  }
+
+  if (disable_sd_card){
+    fast_logger.disable_SD();
   }
 
   fast_logger.start_recording();

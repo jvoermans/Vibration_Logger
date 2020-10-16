@@ -105,13 +105,21 @@ void ADC_Handler()
 
 bool FastLogger::start_recording()
 {
+    // setup the metadata in char data
+    for (size_t crrt_char_block = 0; crrt_char_block < nbr_blocks_char; crrt_char_block++){
+        blocks_cstring_with_metadata[crrt_char_block].metadata.metadata_id = 'C';
+        blocks_cstring_with_metadata[crrt_char_block].metadata.block_number = crrt_char_block;
+    }
+
     // setup the SD card
     const uint8_t SD_CS_PIN = SS;
-#define SD_CONFIG SdSpiConfig(SD_CS_PIN, DEDICATED_SPI)
+    #define SD_CONFIG SdSpiConfig(SD_CS_PIN, DEDICATED_SPI)
 
-    if (!sd_object.begin(SD_CONFIG))
-    {
-        sd_object.initErrorHalt(&Serial);
+    if (sd_is_active){
+        if (!sd_object.begin(SD_CONFIG))
+        {
+            sd_object.initErrorHalt(&Serial);
+        }
     }
 
     delay(5);
@@ -146,6 +154,10 @@ void FastLogger::log_char(const char crrt_char)
     // if end of block, update metadata, write to SD, update indexes etc
     if (crrt_char_data_index_to_write >= nbr_chars_per_block)
     {
+        if (serial_debug_output_is_active){
+            Serial.println(F("chars dump"));
+        }
+
         unsigned long int crrt_micros = micros();
         blocks_cstring_with_metadata[crrt_char_block_index_to_write].metadata.micros_end = crrt_micros;
 
@@ -198,12 +210,12 @@ void FastLogger::internal_update()
 
             if (blocks_to_write[index_to_examine])
             {
-                blocks_to_write[index_to_examine] = false;
-                write_adc_blocks_to_sd_card(index_to_examine);
                 if (serial_debug_output_is_active)
                 {
                     Serial.println(F("ADC dump"));
                 }
+                blocks_to_write[index_to_examine] = false;
+                write_adc_blocks_to_sd_card(index_to_examine);
             }
         }
 
@@ -222,15 +234,29 @@ void FastLogger::enable_serial_debug_output()
     Serial.println(F("FastLogger enable serial debug"));
 }
 
+void FastLogger::disable_SD(){
+    sd_is_active = false;
+}
+
 bool FastLogger::write_block_to_sd_card(void *block_start)
 {
-    if (binary_file.write(block_start, 512) != 512)
-    {
-        if (serial_debug_output_is_active)
-        {
-            Serial.println(F("problem writing block"));
+    if (serial_debug_output_is_active){
+        for (size_t crrt_byte = 0; crrt_byte<20; crrt_byte++){
+            Serial.print(static_cast<uint8_t *>(block_start)[crrt_byte], HEX);
+            Serial.print(" ");
         }
-        return false;
+        Serial.println();
+    }
+
+    if (sd_is_active){
+        if (binary_file.write(block_start, 512) != 512)
+        {
+            if (serial_debug_output_is_active)
+            {
+                Serial.println(F("problem writing block"));
+            }
+            return false;
+        }
     }
 
     return true;
@@ -265,32 +291,34 @@ bool FastLogger::open_new_file()
         Serial.println(filename);
     }
 
-    if (sd_object.exists(filename))
-    {
-        if (serial_debug_output_is_active)
+    if (sd_is_active){
+        if (sd_object.exists(filename))
         {
-            Serial.println(F("file already exists"));
+            if (serial_debug_output_is_active)
+            {
+                Serial.println(F("file already exists"));
+            }
+            return false;
         }
-        return false;
-    }
 
-    // create and pre-allocate the file
-    if (!binary_file.open(filename, O_RDWR | O_CREAT))
-    {
-        if (serial_debug_output_is_active)
+        // create and pre-allocate the file
+        if (!binary_file.open(filename, O_RDWR | O_CREAT))
         {
-            Serial.println(F("cannot open file"));
+            if (serial_debug_output_is_active)
+            {
+                Serial.println(F("cannot open file"));
+            }
+            return false;
         }
-        return false;
-    }
 
-    if (!binary_file.preAllocate(preallocate_size))
-    {
-        if (serial_debug_output_is_active)
+        if (!binary_file.preAllocate(preallocate_size))
         {
-            Serial.println(F("cannot pre-allocate file"));
+            if (serial_debug_output_is_active)
+            {
+                Serial.println(F("cannot pre-allocate file"));
+            }
+            return false;
         }
-        return false;
     }
 
     // keep track of start of file time
@@ -306,13 +334,15 @@ bool FastLogger::close_crrt_file()
         Serial.println(F("close crrt file"));
     }
 
-    if (!binary_file.close())
-    {
-        if (serial_debug_output_is_active)
+    if (sd_is_active){
+        if (!binary_file.close())
         {
-            Serial.println(F("cannot close file"));
+            if (serial_debug_output_is_active)
+            {
+                Serial.println(F("cannot close file"));
+            }
+            return false;
         }
-        return false;
     }
 
     return true;
