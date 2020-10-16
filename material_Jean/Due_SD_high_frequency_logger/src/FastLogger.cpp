@@ -1,5 +1,9 @@
 #include <FastLogger.h>
 
+// TODO: test that works fine at reduced freq logging 50Hz and file duration 15 seconds, with serial output: set up SD card
+// TODO: test that works fine at full frequency
+// TODO: parser tools to inspect the SD card content
+// TODO: add high verbosity debug
 // TODO: truly implement / check the bool (update to op codes?) return values
 
 ////////////////////////////////////////////////////////////
