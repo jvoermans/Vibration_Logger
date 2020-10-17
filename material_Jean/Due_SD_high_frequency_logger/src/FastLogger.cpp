@@ -72,23 +72,30 @@ void ADC_Handler()
         blocks_adc_with_metdata[crrt_adc_channel][crrt_adc_block_index_to_write].data[crrt_adc_data_index_to_write] = crrt_value;
     }
 
+    if (crrt_adc_data_index_to_write == 0){
+        unsigned long crrt_micros = micros();
+
+        for (size_t crrt_adc_channel = 0; crrt_adc_channel < nbr_of_adc_channels; crrt_adc_channel++)
+        {
+            blocks_adc_with_metdata[crrt_adc_channel][crrt_adc_block_index_to_write].metadata.micros_start = crrt_micros;
+        }
+    }
+
     crrt_adc_data_index_to_write += 1;
 
-    if (crrt_adc_data_index_to_write >= nbr_adc_measurements_per_block)
+    if (crrt_adc_data_index_to_write == nbr_adc_measurements_per_block)
     {
+        crrt_adc_data_index_to_write = 0;
+        blocks_to_write[crrt_adc_block_index_to_write] = true;
+
         unsigned long crrt_micros = micros();
-        int next_block_to_write = (crrt_adc_block_index_to_write + 1) % nbr_blocks_per_adc_channel;
 
         for (size_t crrt_adc_channel = 0; crrt_adc_channel < nbr_of_adc_channels; crrt_adc_channel++)
         {
             blocks_adc_with_metdata[crrt_adc_channel][crrt_adc_block_index_to_write].metadata.micros_end = crrt_micros;
-            blocks_adc_with_metdata[crrt_adc_channel][next_block_to_write].metadata.micros_start = crrt_micros;
         }
 
-        crrt_adc_data_index_to_write = 0;
-        blocks_to_write[crrt_adc_block_index_to_write] = true;
-
-        crrt_adc_block_index_to_write = next_block_to_write;
+        crrt_adc_block_index_to_write = (crrt_adc_block_index_to_write + 1) % nbr_blocks_per_adc_channel;
     }
 }
 

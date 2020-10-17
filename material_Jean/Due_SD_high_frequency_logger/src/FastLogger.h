@@ -24,9 +24,9 @@
 // metadata is a 12 bytes sub-block
 struct BlockMetadata{
     // source ID
-    uint8_t metadata_id;
+    uint16_t metadata_id;
     // block number, to keep track of dropouts 
-    uint8_t block_number;
+    uint16_t block_number;
 
     // start and end of the block in micros
     unsigned long micros_start;
