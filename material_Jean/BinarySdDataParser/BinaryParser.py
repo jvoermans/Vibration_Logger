@@ -1,5 +1,7 @@
 import struct
 
+import matplotlib.pyplot as plt
+
 
 class BlockMetadata():
     def __init__(self, metatype, index, start, end):
@@ -20,6 +22,7 @@ class BinaryFileParser():
     ADC_indicator = 65
     CHR_indicator = 67
     n_ADC_channels = 5
+    n_ADC_entries_per_block = 250
 
     def __init__(self, path_to_file):
         self.path_to_file = path_to_file
@@ -51,8 +54,6 @@ class BinaryFileParser():
             if crrt_metadata.metatype == "CHR":
                 self.dict_parsed_data["CHR"].append(crrt_entry)
 
-        return self.dict_parsed_data
-
     def parse_data_block(self, block):
         # first parse the metadata of the block
         metadata = block[0:12]
@@ -82,7 +83,43 @@ class BinaryFileParser():
         return metadata, data
 
     def generate_ADC_timeseries(self):
-        pass
+        self.dict_parsed_data["ADC_parsed"] = {}
+    
+        for crrt_channel in range(self.n_ADC_channels):
+            crrt_list_entries = self.dict_parsed_data["ADC"][crrt_channel]
+            list_times = []
+            list_readings = []
+
+            for crrt_entry in crrt_list_entries:
+                start = crrt_entry.start
+                end = crrt_entry.end
+                delta_time = float(end - start) / (self.n_ADC_entries_per_block - 1)
+                data = crrt_entry.data
+
+                for crrt_value_index in range(self.n_ADC_entries_per_block):
+                    crrt_time = start + crrt_value_index * delta_time
+                    list_times.append(crrt_time)
+                    list_readings.append(data[crrt_value_index])
+
+            self.dict_parsed_data["ADC_parsed"][crrt_channel] = {}
+            self.dict_parsed_data["ADC_parsed"][crrt_channel]["times"] = list_times
+            self.dict_parsed_data["ADC_parsed"][crrt_channel]["readings"] = list_readings
+
+    def plt_ADC_timeseries(self):
+        plt.figure()
+        
+        for crrt_channel in range(self.n_ADC_channels):
+            crrt_times = self.dict_parsed_data["ADC_parsed"][crrt_channel]["times"]
+            crrt_reads = self.dict_parsed_data["ADC_parsed"][crrt_channel]["readings"]
+            plt.plot(crrt_times, crrt_reads, label="channel {}".format(crrt_channel))
+
+        plt.xlabel("time [us]")
+        plt.ylabel("ADC reading [12 bits]")
+        plt.legend(loc="upper right")
+
+        plt.show()
+
+
 
 
 
@@ -93,6 +130,7 @@ if __name__ == "__main__":
 
     path_to_file = "./example_data/F00000000.bin"
     binary_file_parser = BinaryFileParser(path_to_file)
-    dict_parsed_data = binary_file_parser.parse_file()
+    binary_file_parser.parse_file()
+    binary_file_parser.generate_ADC_timeseries()
 
-    pp(dict_parsed_data)
+    binary_file_parser.plt_ADC_timeseries()
