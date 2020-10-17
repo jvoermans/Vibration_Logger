@@ -13,7 +13,7 @@
 
 FastLogger fast_logger;
 static constexpr bool use_serial_debug = true;
-static constexpr bool disable_sd_card = true;
+static constexpr bool disable_sd_card = false;
 
 // trash, just to make sure we write a bit...
 unsigned long last_micros = 0;

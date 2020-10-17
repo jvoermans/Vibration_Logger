@@ -15,10 +15,6 @@
 // a bit of Sd card setup
 // inspired from: https://github.com/greiman/SdFat-beta/blob/master/examples/ExFatLogger/ExFatLogger.ino
 
-// need to use ExFat so that can have large SD cards
-typedef SdExFat sd_t;
-typedef ExFile file_t;
-
 ////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////
 
