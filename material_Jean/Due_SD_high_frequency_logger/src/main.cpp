@@ -1,7 +1,7 @@
 // A simple script to illustrate the fast logger
 // this will:
 // record data in blocks of 512
-// 
+// push it to SD cards updating regularly the filename
 
 // set the frequency of ADC logging at params.h -> adc_sampling_frequency
 // set the duration of each file at params.h -> file_duration_seconds
@@ -9,6 +9,7 @@
 #include <Arduino.h>
 
 #include <FastLogger.h>
+#include <GPS_manager.h>
 
 FastLogger fast_logger;
 static constexpr bool use_serial_debug = true;
