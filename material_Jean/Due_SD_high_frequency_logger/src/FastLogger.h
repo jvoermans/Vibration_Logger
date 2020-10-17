@@ -62,18 +62,6 @@ static_assert(sizeof(BlockCharsWithMetadata) == 512);
 // TODO: read about ISRs, classes, etc
 // TODO: ask for explanation why did not work in SO issue
 
-// the properties for ADC channels logging
-
-// the adc_channels to read, in uC reference, NOT in Arduino Due pinout reference
-// for a mapping, see: https://components101.com/microcontrollers/arduino-due
-// i.e. A0 is AD7
-//      A1    AD6
-//      A2    AD5
-//      A3    AD4
-//      A4    AD3
-//      A5    AD2
-//      A6    AD1
-//      A7    AD
 constexpr int nbr_blocks_per_adc_channel = 8;
 
 constexpr int nbr_of_adc_channels = sizeof(adc_channels);
@@ -168,7 +156,7 @@ private:
     // the number of blocks is the sum of how many chars logging blocks, and how many ADC blocks
     // to be on the safe side, be a bit generous
     static constexpr uint64_t preallocate_nbr_blocks = file_duration_seconds * adc_sampling_frequency / nbr_adc_measurements_per_block
-                                                           + file_duration_seconds * 2;
+                                                           + file_duration_seconds * 2 + 10;
     static constexpr uint64_t preallocate_size = preallocate_nbr_blocks << 9;
 
     // write a block, i.e. the next 512 bytes, to the SD card

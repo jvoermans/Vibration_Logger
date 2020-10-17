@@ -1,11 +1,5 @@
 #include <FastLogger.h>
 
-// TODO: test that works fine at reduced freq logging 50Hz and file duration 15 seconds, with serial output: set up SD card
-// TODO: test that works fine at full frequency
-// TODO: parser tools to inspect the SD card content
-// TODO: add high verbosity debug
-// TODO: truly implement / check the bool (update to op codes?) return values
-
 ////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////
 
@@ -36,7 +30,7 @@ void adc_setup()
     PMC->PMC_PCER1 |= PMC_PCER1_PID37;      // ADC power on
     ADC->ADC_CR = ADC_CR_SWRST;             // Reset ADC
     ADC->ADC_MR |= ADC_MR_TRGEN_EN |        // Hardware trigger select
-                   ADC_MR_PRESCAL(200) |    // the pre-scaler: as high as possible for better accuracy, while still fast enough to measure everything
+                   ADC_MR_PRESCAL(100) |    // the pre-scaler: as high as possible for better accuracy, while still fast enough to measure everything
                                             // see: https://arduino.stackexchange.com/questions/12723/how-to-slow-adc-clock-speed-to-1mhz-on-arduino-due
                                             // unclear, asked: https://stackoverflow.com/questions/64243073/setting-right-adc-prescaler-on-the-arduino-due-in-timer-and-interrupt-driven-mul
                                             // see the Due_ADC_reading sketch for more details, CCL was use ps 2 at 100kHz with 5 channels,  20 at 10kHz, 200 at 1kHz
@@ -112,7 +106,7 @@ bool FastLogger::start_recording()
     }
 
     // setup the SD card
-    const uint8_t SD_CS_PIN = SS;
+    const uint8_t SD_CS_PIN = sd_card_select_pin;
     #define SD_CONFIG SdSpiConfig(SD_CS_PIN, DEDICATED_SPI)
 
     if (sd_is_active){

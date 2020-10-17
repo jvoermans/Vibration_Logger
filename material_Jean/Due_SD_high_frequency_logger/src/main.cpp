@@ -2,9 +2,25 @@
 // this will:
 // record data in blocks of 512
 // push it to SD cards updating regularly the filename
+// two kind of blocks will be pushed: ADC channels and chars
 
-// set the frequency of ADC logging at params.h -> adc_sampling_frequency
-// set the duration of each file at params.h -> file_duration_seconds
+// for parameters and setup see the params.h file
+
+// wiring
+// SD card     |     Arduino Due on the SPI MAX header
+// 3V          |     3.3V
+// GND         |     GND
+// CLK         |     SPI SLK
+// DO          |     MISO
+// DI          |     MOSI
+// CS          |     SS = 10
+
+// SD card
+// make sure it is formatted in FAT
+// adapt to fat type in params.h
+// to check that the formatting is optimal, run the:
+// ExFatFormatter.ino to format in the best way
+// SdInfo.ino to check that the formatting went well
 
 #include <Arduino.h>
 
