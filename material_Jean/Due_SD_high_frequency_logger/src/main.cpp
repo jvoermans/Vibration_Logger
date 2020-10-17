@@ -3,8 +3,8 @@
 // record data in blocks of 512
 // 
 
-// set the frequency of ADC logging at FastLogger.h -> adc_sampling_frequency
-// set the duration of each file at FastLogger.h -> file_duration_seconds
+// set the frequency of ADC logging at params.h -> adc_sampling_frequency
+// set the duration of each file at params.h -> file_duration_seconds
 
 #include <Arduino.h>
 

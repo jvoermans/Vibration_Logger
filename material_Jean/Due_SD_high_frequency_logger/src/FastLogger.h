@@ -6,6 +6,8 @@
 #include <PersistentFilenumber.h>
 #include "SdFat.h"
 
+#include <params.h>
+
 
 ////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////
@@ -76,9 +78,6 @@ static_assert(sizeof(BlockCharsWithMetadata) == 512);
 //      A5    AD2
 //      A6    AD1
 //      A7    AD
-constexpr uint8_t adc_channels[] = {7, 6, 5, 4, 3};
-// constexpr int adc_sampling_frequency = 1000;
-constexpr int adc_sampling_frequency = 100;
 constexpr int nbr_blocks_per_adc_channel = 8;
 
 constexpr int nbr_of_adc_channels = sizeof(adc_channels);
@@ -112,26 +111,27 @@ void ADC_Handler();
 class FastLogger
 {
 public:
-    // start recording to a new file
+    // start recording
     bool start_recording();
 
-    // stop recording, flush buffers and close active file
+    // stop recording
     bool stop_recording();
 
     // log a char to the char block
     void log_char(const char crrt_char);
 
-    // log a cstring to the char block; this will write both the Cstring and some timestamping
+    // log a cstring to the char block; this will write both the cstring and timestamping
     // NOTE that the input must be a pointer to a cstring, i.e. a null terminated string!
     void log_cstring(const char * cstring_start);
 
-    // perform necessary internal requests, such as updating file number
+    // perform necessary internal requests, such as updating file number, dumping to SD card etc
+    // must be called in the main loop at regular intervals
     void internal_update();
 
     // enable Serial debug output on the "USB" serial
     void enable_serial_debug_output();
 
-    // disable SD card, for example for testing
+    // disable SD card, for example for testing, and perform some sample serial printing instead
     void disable_SD();
 
 private:
@@ -139,8 +139,7 @@ private:
     PersistentFilenumber persistent_filenumber;
 
     // a few meta properties of the logging
-    // static constexpr int file_duration_seconds = 15 * 60;
-    static constexpr int file_duration_seconds = 15;
+    static constexpr int file_duration_seconds = logger_file_duration_seconds;
 
     static constexpr int file_duration_milliseconds = 1000 * file_duration_seconds;
     static constexpr int file_duration_microseconds = 1000 * file_duration_milliseconds;
