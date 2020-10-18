@@ -177,11 +177,27 @@ class BinaryFolderParser():
         for crrt_file in self.list_files:
             binary_file_parser = BinaryFileParser(crrt_file, n_ADC_channels=self.n_ADC_channels)
 
-            self.dict_data["CHR"].append(binary_file_parser.dict_parsed_data["CHR_parsed"])
+            self.dict_data["CHR"].extend(str(binary_file_parser.dict_parsed_data["CHR_parsed"])[2:-1])
 
             for crrt_channel in range(self.n_ADC_channels):
-                self.dict_data["ADC_{}".format(crrt_channel)]["times"].append(binary_file_parser.dict_parsed_data["ADC_parsed"][crrt_channel]["times"])
-                self.dict_data["ADC_{}".format(crrt_channel)]["readings"].append(binary_file_parser.dict_parsed_data["ADC_parsed"][crrt_channel]["readings"])
+                self.dict_data["ADC_{}".format(crrt_channel)]["times"].extend(binary_file_parser.dict_parsed_data["ADC_parsed"][crrt_channel]["times"])
+                self.dict_data["ADC_{}".format(crrt_channel)]["readings"].extend(binary_file_parser.dict_parsed_data["ADC_parsed"][crrt_channel]["readings"])
+
+        self.dict_data["CHR"] = "".join(self.dict_data["CHR"])
+
+    def plt_adc_data(self):
+        plt.figure()
+
+        for crrt_channel in range(self.n_ADC_channels):
+            crrt_times = self.dict_data["ADC_{}".format(crrt_channel)]["times"]
+            crrt_reads = self.dict_data["ADC_{}".format(crrt_channel)]["readings"]
+            plt.plot(crrt_times, crrt_reads, label="channel {}".format(crrt_channel))
+
+        plt.xlabel("time [us]")
+        plt.ylabel("ADC reading [12 bits]")
+        plt.legend(loc="upper right")
+
+        plt.show()
 
 
 
@@ -195,4 +211,8 @@ if __name__ == "__main__":
     folder = Path("./example_data/")
 
     binary_folder_parser = BinaryFolderParser(folder=folder)
+    binary_folder_parser.plt_adc_data()
+
+    print(binary_folder_parser.dict_data["CHR"])
+
 

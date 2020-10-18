@@ -27,10 +27,11 @@ void setup_adc_buffer_metadata()
 
 void adc_setup()
 {
+
     PMC->PMC_PCER1 |= PMC_PCER1_PID37;      // ADC power on
     ADC->ADC_CR = ADC_CR_SWRST;             // Reset ADC
     ADC->ADC_MR |= ADC_MR_TRGEN_EN |        // Hardware trigger select
-                   ADC_MR_PRESCAL(100) |    // the pre-scaler: as high as possible for better accuracy, while still fast enough to measure everything
+                   ADC_MR_PRESCAL(adc_prescale) |    // the pre-scaler: as high as possible for better accuracy, while still fast enough to measure everything
                                             // see: https://arduino.stackexchange.com/questions/12723/how-to-slow-adc-clock-speed-to-1mhz-on-arduino-due
                                             // unclear, asked: https://stackoverflow.com/questions/64243073/setting-right-adc-prescaler-on-the-arduino-due-in-timer-and-interrupt-driven-mul
                                             // see the Due_ADC_reading sketch for more details, CCL was use ps 2 at 100kHz with 5 channels,  20 at 10kHz, 200 at 1kHz

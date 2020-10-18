@@ -64,7 +64,6 @@ static_assert(sizeof(BlockCharsWithMetadata) == 512);
 
 constexpr int nbr_blocks_per_adc_channel = 8;
 
-constexpr int nbr_of_adc_channels = sizeof(adc_channels);
 constexpr int nbr_adc_measurements_per_block = 250;
 
 extern volatile bool blocks_to_write[nbr_of_adc_channels];
