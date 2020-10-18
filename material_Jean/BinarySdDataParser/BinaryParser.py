@@ -1,4 +1,7 @@
 import struct
+from pathlib import Path
+
+from raise_assert import ras
 
 import matplotlib.pyplot as plt
 
@@ -21,10 +24,12 @@ class DataEntry():
 class BinaryFileParser():
     ADC_indicator = 65
     CHR_indicator = 67
-    n_ADC_channels = 5
     n_ADC_entries_per_block = 250
 
-    def __init__(self, path_to_file):
+    def __init__(self, path_to_file, n_ADC_channels=5):
+        ras(isinstance(path_to_file, Path))
+
+        self.n_ADC_channels = n_ADC_channels
         self.path_to_file = path_to_file
 
         self.dict_parsed_data = {}
@@ -32,6 +37,10 @@ class BinaryFileParser():
         for crrt_channel in range(self.n_ADC_channels):
             self.dict_parsed_data["ADC"][crrt_channel] = []
         self.dict_parsed_data["CHR"] = []
+
+        self.parse_file()
+        self.generate_ADC_timeseries()
+        self.assemble_char_data()
 
     def parse_file(self):
         with open(self.path_to_file, "rb") as fh:
@@ -84,7 +93,7 @@ class BinaryFileParser():
 
     def generate_ADC_timeseries(self):
         self.dict_parsed_data["ADC_parsed"] = {}
-    
+
         for crrt_channel in range(self.n_ADC_channels):
             crrt_list_entries = self.dict_parsed_data["ADC"][crrt_channel]
             list_times = []
@@ -105,9 +114,19 @@ class BinaryFileParser():
             self.dict_parsed_data["ADC_parsed"][crrt_channel]["times"] = list_times
             self.dict_parsed_data["ADC_parsed"][crrt_channel]["readings"] = list_readings
 
+    def assemble_char_data(self):
+        crrt_list_entries = self.dict_parsed_data["CHR"]
+        list_chr_data = []
+
+        for crrt_entry in crrt_list_entries:
+            chr_data = crrt_entry.data
+            list_chr_data.append(chr_data)
+
+        self.dict_parsed_data["CHR_parsed"] = b''.join(list_chr_data)
+
     def plt_ADC_timeseries(self):
         plt.figure()
-        
+
         for crrt_channel in range(self.n_ADC_channels):
             crrt_times = self.dict_parsed_data["ADC_parsed"][crrt_channel]["times"]
             crrt_reads = self.dict_parsed_data["ADC_parsed"][crrt_channel]["readings"]
@@ -120,6 +139,51 @@ class BinaryFileParser():
         plt.show()
 
 
+def filename_to_filenumber(filename):
+    str_number = filename.name[1:9]
+    filenumber = int(str_number)
+    return filenumber
+
+
+class BinaryFolderParser():
+    def __init__(self, list_files=None, folder=None, n_ADC_channels=5):
+        self.n_ADC_channels = n_ADC_channels
+
+        self.dict_data = {}
+        for crrt_channel in range(self.n_ADC_channels):
+            self.dict_data["ADC_{}".format(crrt_channel)] = {}
+            self.dict_data["ADC_{}".format(crrt_channel)]["times"] = []
+            self.dict_data["ADC_{}".format(crrt_channel)]["readings"] = []
+
+        self.dict_data["CHR"] = []
+
+        if list_files is not None:
+            self.list_files = list_files
+            ras(folder is None)
+        elif folder is not None:
+            self.list_files = sorted(list(folder.glob("F*.bin")))
+        else:
+            raise ValueError("Need either list_files, or folder.")
+
+        # check that the files are in order, without holes
+        previous_filenumber = filename_to_filenumber(self.list_files[0])
+
+        for crrt_file in self.list_files[1:]:
+            crrt_filenumber = filename_to_filenumber(crrt_file)
+            ras(previous_filenumber + 1 == crrt_filenumber,
+                "non consecutive filenumbers: {} vs {}".format(previous_filenumber, crrt_filenumber))
+            previous_filenumber = crrt_filenumber
+
+        for crrt_file in self.list_files:
+            binary_file_parser = BinaryFileParser(crrt_file, n_ADC_channels=self.n_ADC_channels)
+
+            self.dict_data["CHR"].append(binary_file_parser.dict_parsed_data["CHR_parsed"])
+
+            for crrt_channel in range(self.n_ADC_channels):
+                self.dict_data["ADC_{}".format(crrt_channel)]["times"].append(binary_file_parser.dict_parsed_data["ADC_parsed"][crrt_channel]["times"])
+                self.dict_data["ADC_{}".format(crrt_channel)]["readings"].append(binary_file_parser.dict_parsed_data["ADC_parsed"][crrt_channel]["readings"])
+
+
 
 
 
@@ -128,9 +192,7 @@ if __name__ == "__main__":
 
     pp = pprint.PrettyPrinter(indent=2).pprint
 
-    path_to_file = "./example_data/F00000000.bin"
-    binary_file_parser = BinaryFileParser(path_to_file)
-    binary_file_parser.parse_file()
-    binary_file_parser.generate_ADC_timeseries()
+    folder = Path("./example_data/")
 
-    binary_file_parser.plt_ADC_timeseries()
+    binary_folder_parser = BinaryFolderParser(folder=folder)
+

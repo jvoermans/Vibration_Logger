@@ -175,7 +175,6 @@ void FastLogger::log_cstring(const char *cstring)
     // log the time
     unsigned long crrt_micros = micros();
 
-    log_char(';');
     log_char('M');
 
     char micros_timestamp[10];
