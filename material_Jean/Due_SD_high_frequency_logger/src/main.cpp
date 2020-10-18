@@ -7,13 +7,22 @@
 // for parameters and setup see the params.h file
 
 // wiring
+
 // SD card     |     Arduino Due on the SPI MAX header
+
 // 3V          |     3.3V
 // GND         |     GND
 // CLK         |     SPI SLK
 // DO          |     MISO
 // DI          |     MOSI
 // CS          |     SS = 10
+
+// GPS         |     Arduino Due
+// 3.3V        |     3.3V
+// GND         |     GND
+// TX          |     RX1
+// RX          |     TX1
+// PPS         |     digital pin 2
 
 // SD card
 // make sure it is formatted in FAT
@@ -28,13 +37,15 @@
 #include <GPS_manager.h>
 
 FastLogger fast_logger;
+
+GPSManager gps_manager;
+
 static constexpr bool use_serial_debug = true;
 static constexpr bool disable_sd_card = false;
 
-// trash, just to make sure we write a bit...
-unsigned long last_micros = 0;
-
 void setup() {
+  delay(10000);
+
   if (use_serial_debug){
     Serial.begin(115200);
     delay(100);
@@ -42,6 +53,7 @@ void setup() {
 
   if (use_serial_debug){
     fast_logger.enable_serial_debug_output();
+    gps_manager.enable_serial_debug_output();
   }
 
   if (disable_sd_card){
@@ -49,18 +61,21 @@ void setup() {
   }
 
   fast_logger.start_recording();
+  gps_manager.start_gps();
 
   fast_logger.log_cstring("Start!");
-
 }
 
 void loop() {
   // internal update must be called quite often so as to check if some ADC data to log
   fast_logger.internal_update();
 
-  // just to make sure we write a bit...
-  if (micros() - last_micros > 100000){
-    last_micros = micros();
-    fast_logger.log_cstring("test");
+  // take care of the GPS and log the GPS output
+  gps_manager.update_status();
+  if (gps_manager.pps_available()){
+    fast_logger.log_cstring(gps_manager.get_pps_message());
+  }
+  if (gps_manager.message_available()){
+    fast_logger.log_cstring(gps_manager.get_message());
   }
 }

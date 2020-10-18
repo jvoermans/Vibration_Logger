@@ -14,3 +14,6 @@
 [submodule "material_Jean/ExFatFormatter/lib/SdFat-beta"]
 	path = material_Jean/ExFatFormatter/lib/SdFat-beta
 	url = git@github.com:greiman/SdFat-beta.git
+[submodule "material_Jean/Due_SD_high_frequency_logger/lib/Adafruit_GPS"]
+	path = material_Jean/Due_SD_high_frequency_logger/lib/Adafruit_GPS
+	url = git@github.com:adafruit/Adafruit_GPS.git

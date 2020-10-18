@@ -4,6 +4,9 @@
 #define PARAMS_HFLOGGER
 
 #include "Arduino.h"
+#include "SdFat.h"
+
+// parameters related to the ADC channels logging
 
 // the adc_channels to read, in uC reference, NOT in Arduino Due pinout reference
 // for a mapping, see: https://components101.com/microcontrollers/arduino-due
@@ -25,6 +28,8 @@ constexpr int adc_sampling_frequency = 1000;
 // the prescaler should be 100 for 1kHz, 15 for 10kHz, 2 for 100kHz
 constexpr uint8_t adc_prescale = 100;
 
+// parameters related to the SD card and logging file
+
 // the duration of each individual binary file in seconds
 // static constexpr int file_duration_seconds = 15 * 60;
 // constexpr int logger_file_duration_seconds = 15;
@@ -41,5 +46,10 @@ typedef FsFile file_t;
 // which slave select pin to use
 // the default SS pin on due is the digital pin 10
 const uint8_t sd_card_select_pin = SS;
+
+// parameters related to the GPS
+
+constexpr HardwareSerial * selected_gps_serial = &Serial1;
+constexpr uint8_t selected_PPS_digital_pin = 2;
 
 #endif // !PARAMS_HFLOGGER
