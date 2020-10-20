@@ -111,7 +111,7 @@ class BinaryFileParser():
                     list_readings.append(data[crrt_value_index])
 
             self.dict_parsed_data["ADC_parsed"][crrt_channel] = {}
-            self.dict_parsed_data["ADC_parsed"][crrt_channel]["times"] = list_times
+            self.dict_parsed_data["ADC_parsed"][crrt_channel]["micros"] = list_times
             self.dict_parsed_data["ADC_parsed"][crrt_channel]["readings"] = list_readings
 
     def assemble_char_data(self):
@@ -128,7 +128,7 @@ class BinaryFileParser():
         plt.figure()
 
         for crrt_channel in range(self.n_ADC_channels):
-            crrt_times = self.dict_parsed_data["ADC_parsed"][crrt_channel]["times"]
+            crrt_times = self.dict_parsed_data["ADC_parsed"][crrt_channel]["micros"]
             crrt_reads = self.dict_parsed_data["ADC_parsed"][crrt_channel]["readings"]
             plt.plot(crrt_times, crrt_reads, label="channel {}".format(crrt_channel))
 
@@ -146,9 +146,33 @@ def filename_to_filenumber(filename):
     return filenumber
 
 
-def unwrapp_list_micros(list_micros, max_logging_delta=1000000 * 10):
-    """given a list_micros of micros readings, possibly that have wrapped, 
+def unwrapp_list_micros(list_micros, max_logging_delta=1000000 * 60 * 15, wrap_value=2**32-1):
+    """Given a list_micros of consecutive micros readings, possibly that have wrapped,
+    unwrapp them.
     """
+    list_unwrapped_micros = []
+
+    crrt_unwrapping_value = 0
+
+    # at least the first entry is always unwrapped...
+    previous_entry_unwrapped = list_micros[0]
+    list_unwrapped_micros.append(previous_entry_unwrapped)
+
+    for crrt_entry in list_micros[1:]:
+        crrt_entry_unwrapped = crrt_entry + crrt_unwrapping_value
+
+        if crrt_entry_unwrapped < previous_entry_unwrapped:
+            # close enough to a wrapping point: that was true wrapping
+            if (((previous_entry_unwrapped + max_logging_delta) % wrap_value) < (previous_entry_unwrapped % wrap_value)):
+                crrt_entry_unwrapped += wrap_value
+                crrt_unwrapping_value += wrap_value
+            else:
+                raise ValueError("We observe wrapping, but we are far away from the wrapping point!")
+
+        list_unwrapped_micros.append(crrt_entry_unwrapped)
+        previous_entry_unwrapped = crrt_entry_unwrapped
+
+    return list_unwrapped_micros
 
 
 class BinaryFolderParser():
@@ -189,14 +213,18 @@ class BinaryFolderParser():
             self.dict_data["CHR"].extend(str(binary_file_parser.dict_parsed_data["CHR_parsed"])[2:-1])
 
             for crrt_channel in range(self.n_ADC_channels):
-                self.dict_data["ADC_{}".format(crrt_channel)]["micros"].extend(binary_file_parser.dict_parsed_data["ADC_parsed"][crrt_channel]["times"])
-                self.dict_data["ADC_{}".format(crrt_channel)]["readings"].extend(binary_file_parser.dict_parsed_data["ADC_parsed"][crrt_channel]["readings"])
+                self.dict_data["ADC_{}".format(crrt_channel)]["micros"].extend(
+                    binary_file_parser.dict_parsed_data["ADC_parsed"][crrt_channel]["micros"]
+                )
+                self.dict_data["ADC_{}".format(crrt_channel)]["readings"].extend(
+                    binary_file_parser.dict_parsed_data["ADC_parsed"][crrt_channel]["readings"]
+                )
 
         self.dict_data["CHR"] = "".join(self.dict_data["CHR"])
 
-        self.parse_chr_messages()
+        self._parse_chr_messages()
 
-    def parse_chr_messages(self):
+    def _parse_chr_messages(self):
         list_chr_entries = self.dict_data["CHR"].split(";")[2:-2]
         nbr_chr_entries = len(list_chr_entries)
 
@@ -219,6 +247,10 @@ class BinaryFolderParser():
 
         self.dict_data["CHR_micros"] = list_chr_micros
         self.dict_data["CHR_messages"] = list_chr_messages
+
+    # todo: parse PPS
+    def _unwrap_all_micros(self):
+        pass
 
     def add_utc_timestamps(self):
         pass
