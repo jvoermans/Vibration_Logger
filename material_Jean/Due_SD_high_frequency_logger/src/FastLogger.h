@@ -105,6 +105,7 @@ public:
 
     // log a cstring to the char block; this will write both the cstring and timestamping
     // NOTE that the input must be a pointer to a cstring, i.e. a null terminated string!
+    // NOTE that the char ";" is used as a delimiter internally, so cannot be part of the cstring!
     void log_cstring(const char * cstring_start);
 
     // perform necessary internal requests, such as updating file number, dumping to SD card etc

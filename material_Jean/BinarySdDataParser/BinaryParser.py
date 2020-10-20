@@ -140,23 +140,31 @@ class BinaryFileParser():
 
 
 def filename_to_filenumber(filename):
+    """turn a standard logger filename into its filenmumber."""
     str_number = filename.name[1:9]
     filenumber = int(str_number)
     return filenumber
 
 
+def unwrapp_list_micros(list_micros, max_logging_delta=1000000 * 10):
+    """given a list_micros of micros readings, possibly that have wrapped, 
+    """
+
+
 class BinaryFolderParser():
     def __init__(self, list_files=None, folder=None, n_ADC_channels=5):
+        # be ready to log several adc channels + chars channels
         self.n_ADC_channels = n_ADC_channels
 
         self.dict_data = {}
         for crrt_channel in range(self.n_ADC_channels):
             self.dict_data["ADC_{}".format(crrt_channel)] = {}
-            self.dict_data["ADC_{}".format(crrt_channel)]["times"] = []
+            self.dict_data["ADC_{}".format(crrt_channel)]["micros"] = []
             self.dict_data["ADC_{}".format(crrt_channel)]["readings"] = []
 
         self.dict_data["CHR"] = []
 
+        # find the list of files to analyze
         if list_files is not None:
             self.list_files = list_files
             ras(folder is None)
@@ -174,22 +182,52 @@ class BinaryFolderParser():
                 "non consecutive filenumbers: {} vs {}".format(previous_filenumber, crrt_filenumber))
             previous_filenumber = crrt_filenumber
 
+        # parse each individual file and put the data together
         for crrt_file in self.list_files:
             binary_file_parser = BinaryFileParser(crrt_file, n_ADC_channels=self.n_ADC_channels)
 
             self.dict_data["CHR"].extend(str(binary_file_parser.dict_parsed_data["CHR_parsed"])[2:-1])
 
             for crrt_channel in range(self.n_ADC_channels):
-                self.dict_data["ADC_{}".format(crrt_channel)]["times"].extend(binary_file_parser.dict_parsed_data["ADC_parsed"][crrt_channel]["times"])
+                self.dict_data["ADC_{}".format(crrt_channel)]["micros"].extend(binary_file_parser.dict_parsed_data["ADC_parsed"][crrt_channel]["times"])
                 self.dict_data["ADC_{}".format(crrt_channel)]["readings"].extend(binary_file_parser.dict_parsed_data["ADC_parsed"][crrt_channel]["readings"])
 
         self.dict_data["CHR"] = "".join(self.dict_data["CHR"])
+
+        self.parse_chr_messages()
+
+    def parse_chr_messages(self):
+        list_chr_entries = self.dict_data["CHR"].split(";")[2:-2]
+        nbr_chr_entries = len(list_chr_entries)
+
+        list_chr_micros = []
+        list_chr_messages = []
+
+        crrt_chr_entry_index = 0
+
+        while crrt_chr_entry_index < nbr_chr_entries:
+            crrt_entry = list_chr_entries[crrt_chr_entry_index]
+
+            if crrt_entry[0] == 'M' and len(crrt_entry) == 10:
+                crrt_chr_entry_index += 1
+                next_entry = list_chr_entries[crrt_chr_entry_index]
+
+                list_chr_micros.append(int(crrt_entry[1:]))
+                list_chr_messages.append(next_entry)
+
+            crrt_chr_entry_index += 1
+
+        self.dict_data["CHR_micros"] = list_chr_micros
+        self.dict_data["CHR_messages"] = list_chr_messages
+
+    def add_utc_timestamps(self):
+        pass
 
     def plt_adc_data(self):
         plt.figure()
 
         for crrt_channel in range(self.n_ADC_channels):
-            crrt_times = self.dict_data["ADC_{}".format(crrt_channel)]["times"]
+            crrt_times = self.dict_data["ADC_{}".format(crrt_channel)]["micros"]
             crrt_reads = self.dict_data["ADC_{}".format(crrt_channel)]["readings"]
             plt.plot(crrt_times, crrt_reads, label="channel {}".format(crrt_channel))
 
@@ -212,7 +250,3 @@ if __name__ == "__main__":
 
     binary_folder_parser = BinaryFolderParser(folder=folder)
     binary_folder_parser.plt_adc_data()
-
-    print(binary_folder_parser.dict_data["CHR"])
-
-

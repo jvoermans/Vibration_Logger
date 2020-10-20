@@ -191,7 +191,13 @@ void FastLogger::log_cstring(const char *cstring)
     size_t i = 0;
     while (cstring[i] != '\0')
     {
-        log_char(cstring[i]);
+        char crrt_char = cstring[i];
+
+        if (crrt_char == ';'){
+            crrt_char = ':';
+        }
+
+        log_char(crrt_char);
         i++;
     }
 

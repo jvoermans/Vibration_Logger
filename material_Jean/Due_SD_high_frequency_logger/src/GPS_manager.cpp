@@ -42,7 +42,7 @@ void GPSManager::start_gps(void){
     pps_message_buffer[0] = 'P';
     pps_message_buffer[1] = 'P';
     pps_message_buffer[2] = 'S';
-    pps_message_buffer[3] = ';';
+    pps_message_buffer[3] = ':';
     pps_message_buffer[14] = ';';
     pps_message_buffer[15] = '\0';
 
