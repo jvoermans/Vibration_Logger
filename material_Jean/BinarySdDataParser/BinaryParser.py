@@ -222,7 +222,14 @@ class BinaryFolderParser():
 
         self.dict_data["CHR"] = "".join(self.dict_data["CHR"])
 
+        # parse chars messages: separate the micros timestamps from the messages entries
         self._parse_chr_messages()
+
+        # find the PPS entries and corresponding GPRMC strings
+        self._extract_PPS_data()
+        
+        # unwrap all micros information
+        self._unwrap_all_micros()
 
     def _parse_chr_messages(self):
         list_chr_entries = self.dict_data["CHR"].split(";")[2:-2]
@@ -248,14 +255,47 @@ class BinaryFolderParser():
         self.dict_data["CHR_micros"] = list_chr_micros
         self.dict_data["CHR_messages"] = list_chr_messages
 
-    # todo: parse PPS
+    def _extract_PPS_data(self):
+        list_PPS_entries = []
+        list_PPS_entries_micros = []
+        list_PPS_GPRMC_entries = []
+
+        nbr_chr_entries = len(self.dict_data["CHR_messages"])
+        crrt_CHR_entry_index = 0
+
+        while crrt_CHR_entry_index < nbr_chr_entries:
+            if self.dict_data["CHR_messages"][crrt_CHR_entry_index][0:4] == "PPS:":
+                crrt_PPS_entry = self.dict_data["CHR_messages"][crrt_CHR_entry_index]
+                while crrt_CHR_entry_index < nbr_chr_entries:
+                    if self.dict_data["CHR_messages"][crrt_CHR_entry_index][0:7] == "$GPRMC,":
+                        list_PPS_entries.append(crrt_PPS_entry)
+                        list_PPS_GPRMC_entries.append(self.dict_data["CHR_messages"][crrt_CHR_entry_index])
+                        list_PPS_entries_micros.append(int(crrt_PPS_entry[4:]))
+                        break
+                    crrt_CHR_entry_index += 1
+
+            crrt_CHR_entry_index += 1
+
+        self.dict_data["PPS_entries"] = list_PPS_entries
+        self.dict_data["PPS_entries_micros"] = list_PPS_entries_micros
+        self.dict_data["PPS_GPRMC_entries"] = list_PPS_GPRMC_entries
+
     def _unwrap_all_micros(self):
+        self.dict_data["CHR_micros_unwrapped"] = unwrapp_list_micros(self.dict_data["CHR_micros"])
+        self.dict_data["ADC_micros_unwrapped"] = unwrapp_list_micros(self.dict_data["ADC_0"]["micros"])
+        self.dict_data["PPS_entries_micros_unwrapped"] = unwrapp_list_micros(self.dict_data["PPS_entries_micros"])
+
+    def generate_utc_timestamps_regression(self):
+        # regression from timestamp of PPS_GPRMC_entries to PPS_entries_micros_unwrapped
+        # this gives a function micros -> timestamp
+        # can then perform timestamp -> datetime
         pass
 
-    def add_utc_timestamps(self):
-        pass
+    # TODO: example of extract information about position or other
+    # TODO: 
 
     def plt_adc_data(self):
+        # TODO: use datetime from the regression
         plt.figure()
 
         for crrt_channel in range(self.n_ADC_channels):
@@ -270,9 +310,6 @@ class BinaryFolderParser():
         plt.show()
 
 
-
-
-
 if __name__ == "__main__":
     import pprint
 
@@ -282,3 +319,9 @@ if __name__ == "__main__":
 
     binary_folder_parser = BinaryFolderParser(folder=folder)
     binary_folder_parser.plt_adc_data()
+
+    print(binary_folder_parser.dict_data["CHR_micros"])
+    print(binary_folder_parser.dict_data["CHR_messages"])
+    print(binary_folder_parser.dict_data["PPS_entries_micros"])
+    print(binary_folder_parser.dict_data["PPS_GPRMC_entries"])
+    print(binary_folder_parser.dict_data["PPS_entries_micros_unwrapped"])
