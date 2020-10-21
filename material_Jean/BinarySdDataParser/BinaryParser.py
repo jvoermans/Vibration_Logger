@@ -201,7 +201,7 @@ class BinaryFolderParser():
         # find the list of files to analyze
         if list_files is not None:
             self.list_files = list_files
-            ras(folder is None)
+            ras(folder is None, "need to choose either folder or list of files")
         elif folder is not None:
             self.list_files = sorted(list(folder.glob("F*.bin")))
         else:
@@ -383,3 +383,7 @@ if __name__ == "__main__":
     # - get ADC data: time base + data as a list of channels
     # - get char data: function to 1) select the chr packets 2) interact with them to extract the information -> get utc datetime vector + list of data returned
     # - add example with GPRMC on how to extract (lat, lon) tuples
+    # - add some dump functionality
+
+    # TODO:
+    # - split parsing effort between segments of several files, to avoid memory run out for long time series.
