@@ -237,7 +237,7 @@ class BinaryFolderParser():
 
         # find the PPS entries and corresponding GPRMC strings
         self._extract_PPS_data()
-        
+
         # unwrap all micros information
         self._unwrap_all_micros()
 
@@ -311,14 +311,14 @@ class BinaryFolderParser():
                 crrt_entry.datestamp, crrt_entry.timestamp, tzinfo=datetime.timezone.utc
             ) for crrt_entry in self.dict_data["PPS_GPRMC_entries"]
         ]
-        
+
         # create list of valid fixes
         list_valid_fixes = [(crrt_entry.status == 'A') for crrt_entry in self.dict_data["PPS_GPRMC_entries"]]
-        
+
         # keep only valid fixes for doing the fit
         valid_PPS_entries = [ind for ind, valid_fix in enumerate(list_valid_fixes) if valid_fix]
         valid_PPS_getter = itemgetter(*valid_PPS_entries)
-        
+
         # perform the fitting
         unrolled_arduino_PPS_micros = list(valid_PPS_getter(self.dict_data["PPS_entries_micros_unwrapped"]))
         PPS_timestamps = valid_PPS_getter([crrt_datetime.timestamp() for crrt_datetime in list_PPS_datetimes])
@@ -342,7 +342,7 @@ class BinaryFolderParser():
             datetime_from_unrolled_PPS_micros = self.fn_unrolled_arduino_micros_to_datetime(unrolled_arduino_PPS_micros)
 
             list_deviation_PPS_micros_vs_datetime = []
-            
+
             for ind in range(len(datetime_from_unrolled_PPS_micros)):
                 crrt_from_micros = datetime_from_unrolled_PPS_micros[ind]
                 crrt_from_GPRMC = list_PPS_datetimes[ind]
@@ -387,3 +387,7 @@ if __name__ == "__main__":
 
     # TODO:
     # - split parsing effort between segments of several files, to avoid memory run out for long time series.
+    # - do something like: sliding average over segments, to make sure no message lost. At fusion between the sliding averages, take away duplicated data.
+
+    # TODO:
+    # micros overflow after ardound 70 minutes. Test logging on a whole day, and check that the parser works fine also when overflow takes place.
