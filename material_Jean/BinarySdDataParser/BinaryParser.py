@@ -1,6 +1,14 @@
 import struct
 from pathlib import Path
 
+from operator import itemgetter
+
+import numpy as np
+
+import pynmea2
+
+import datetime
+
 from raise_assert import ras
 
 import matplotlib.pyplot as plt
@@ -176,7 +184,9 @@ def unwrapp_list_micros(list_micros, max_logging_delta=1000000 * 60 * 15, wrap_v
 
 
 class BinaryFolderParser():
-    def __init__(self, list_files=None, folder=None, n_ADC_channels=5):
+    def __init__(self, list_files=None, folder=None, n_ADC_channels=5, show_plots=False):
+        self.show_plots = show_plots
+
         # be ready to log several adc channels + chars channels
         self.n_ADC_channels = n_ADC_channels
 
@@ -231,6 +241,9 @@ class BinaryFolderParser():
         # unwrap all micros information
         self._unwrap_all_micros()
 
+        # get the function micros -> timestamp
+        self._generate_utc_timestamps_regression(show_fit=self.show_plots)
+
     def _parse_chr_messages(self):
         list_chr_entries = self.dict_data["CHR"].split(";")[2:-2]
         nbr_chr_entries = len(list_chr_entries)
@@ -269,7 +282,9 @@ class BinaryFolderParser():
                 while crrt_CHR_entry_index < nbr_chr_entries:
                     if self.dict_data["CHR_messages"][crrt_CHR_entry_index][0:7] == "$GPRMC,":
                         list_PPS_entries.append(crrt_PPS_entry)
-                        list_PPS_GPRMC_entries.append(self.dict_data["CHR_messages"][crrt_CHR_entry_index])
+                        list_PPS_GPRMC_entries.append(
+                            pynmea2.parse(self.dict_data["CHR_messages"][crrt_CHR_entry_index].split('\\')[0])
+                        )
                         list_PPS_entries_micros.append(int(crrt_PPS_entry[4:]))
                         break
                     crrt_CHR_entry_index += 1
@@ -285,25 +300,69 @@ class BinaryFolderParser():
         self.dict_data["ADC_micros_unwrapped"] = unwrapp_list_micros(self.dict_data["ADC_0"]["micros"])
         self.dict_data["PPS_entries_micros_unwrapped"] = unwrapp_list_micros(self.dict_data["PPS_entries_micros"])
 
-    def generate_utc_timestamps_regression(self):
+    def _generate_utc_timestamps_regression(self, show_fit=False):
         # regression from timestamp of PPS_GPRMC_entries to PPS_entries_micros_unwrapped
         # this gives a function micros -> timestamp
         # can then perform timestamp -> datetime
-        pass
 
-    # TODO: example of extract information about position or other
-    # TODO: 
+        # assemble date and time
+        list_PPS_datetimes = [
+            datetime.datetime.combine(
+                crrt_entry.datestamp, crrt_entry.timestamp, tzinfo=datetime.timezone.utc
+            ) for crrt_entry in self.dict_data["PPS_GPRMC_entries"]
+        ]
+        
+        # create list of valid fixes
+        list_valid_fixes = [(crrt_entry.status == 'A') for crrt_entry in self.dict_data["PPS_GPRMC_entries"]]
+        
+        # keep only valid fixes for doing the fit
+        valid_PPS_entries = [ind for ind, valid_fix in enumerate(list_valid_fixes) if valid_fix]
+        valid_PPS_getter = itemgetter(*valid_PPS_entries)
+        
+        # perform the fitting
+        unrolled_arduino_PPS_micros = list(valid_PPS_getter(self.dict_data["PPS_entries_micros_unwrapped"]))
+        PPS_timestamps = valid_PPS_getter([crrt_datetime.timestamp() for crrt_datetime in list_PPS_datetimes])
+
+        degree = 1
+        coeffs = np.polyfit(unrolled_arduino_PPS_micros, PPS_timestamps, degree)
+        self.polyfit_unrolled_micros_to_timestamp = np.poly1d(coeffs)
+
+        def fn_unrolled_arduino_micros_to_datetime(unrolled_arduino_micro):
+            ras(isinstance(unrolled_arduino_micro, list))
+            timestamp = self.polyfit_unrolled_micros_to_timestamp(unrolled_arduino_micro)
+            datetimes = [
+                datetime.datetime.utcfromtimestamp(crrt_timestamp).replace(tzinfo=datetime.timezone.utc)
+                for crrt_timestamp in timestamp
+            ]
+            return(datetimes)
+
+        self.fn_unrolled_arduino_micros_to_datetime = fn_unrolled_arduino_micros_to_datetime
+
+        if show_fit:
+            datetime_from_unrolled_PPS_micros = self.fn_unrolled_arduino_micros_to_datetime(unrolled_arduino_PPS_micros)
+
+            list_deviation_PPS_micros_vs_datetime = []
+            
+            for ind in range(len(datetime_from_unrolled_PPS_micros)):
+                crrt_from_micros = datetime_from_unrolled_PPS_micros[ind]
+                crrt_from_GPRMC = list_PPS_datetimes[ind]
+
+                list_deviation_PPS_micros_vs_datetime.append((crrt_from_GPRMC - crrt_from_micros).total_seconds())
+
+            plt.figure()
+            plt.plot(unrolled_arduino_PPS_micros, list_deviation_PPS_micros_vs_datetime)
+            plt.xlabel("arduino unrolled micros timestamp")
+            plt.ylabel("deviation GPRMC time vs. arduino micros converted to datetime [seconds]")
+            plt.show()
 
     def plt_adc_data(self):
-        # TODO: use datetime from the regression
         plt.figure()
 
         for crrt_channel in range(self.n_ADC_channels):
-            crrt_times = self.dict_data["ADC_{}".format(crrt_channel)]["micros"]
+            crrt_times = self.fn_unrolled_arduino_micros_to_datetime(self.dict_data["ADC_{}".format(crrt_channel)]["micros"])
             crrt_reads = self.dict_data["ADC_{}".format(crrt_channel)]["readings"]
             plt.plot(crrt_times, crrt_reads, label="channel {}".format(crrt_channel))
 
-        plt.xlabel("time [us]")
         plt.ylabel("ADC reading [12 bits]")
         plt.legend(loc="upper right")
 
@@ -317,11 +376,7 @@ if __name__ == "__main__":
 
     folder = Path("./example_data/")
 
-    binary_folder_parser = BinaryFolderParser(folder=folder)
+    binary_folder_parser = BinaryFolderParser(folder=folder, show_plots=True)
     binary_folder_parser.plt_adc_data()
 
-    print(binary_folder_parser.dict_data["CHR_micros"])
-    print(binary_folder_parser.dict_data["CHR_messages"])
-    print(binary_folder_parser.dict_data["PPS_entries_micros"])
-    print(binary_folder_parser.dict_data["PPS_GPRMC_entries"])
-    print(binary_folder_parser.dict_data["PPS_entries_micros_unwrapped"])
+    # TODO: - get ADC data; - get char data: function to select the packets and interact with them, example with GPRMC and (lat, lon)
