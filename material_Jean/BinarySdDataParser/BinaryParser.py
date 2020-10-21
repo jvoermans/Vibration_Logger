@@ -379,4 +379,7 @@ if __name__ == "__main__":
     binary_folder_parser = BinaryFolderParser(folder=folder, show_plots=True)
     binary_folder_parser.plt_adc_data()
 
-    # TODO: - get ADC data; - get char data: function to select the packets and interact with them, example with GPRMC and (lat, lon)
+    # TODO:
+    # - get ADC data: time base + data as a list of channels
+    # - get char data: function to 1) select the chr packets 2) interact with them to extract the information -> get utc datetime vector + list of data returned
+    # - add example with GPRMC on how to extract (lat, lon) tuples

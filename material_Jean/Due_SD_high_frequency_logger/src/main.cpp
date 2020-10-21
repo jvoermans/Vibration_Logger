@@ -1,8 +1,9 @@
 // A simple script to illustrate the fast logger
 // this will:
-// record data in blocks of 512
+// record data in blocks of 512 bytes
 // push it to SD cards updating regularly the filename
 // two kind of blocks will be pushed: ADC channels and chars
+// there is a python parser that can read and parse the SD card information, see BinarySdDataParser.
 
 // for parameters and setup see the params.h file
 
@@ -18,15 +19,16 @@
 // CS          |     SS = 10
 
 // GPS         |     Arduino Due
+
 // 3.3V        |     3.3V
 // GND         |     GND
 // TX          |     RX1
 // RX          |     TX1
 // PPS         |     digital pin 2
 
-// SD card
+// notes about the SD card
 // make sure it is formatted in FAT
-// adapt to fat type in params.h
+// adapt to fat type in params.h when the typedefs are performed
 // to check that the formatting is optimal, run the:
 // ExFatFormatter.ino to format in the best way
 // SdInfo.ino to check that the formatting went well
@@ -78,4 +80,6 @@ void loop() {
   if (gps_manager.message_available()){
     fast_logger.log_cstring(gps_manager.get_message());
   }
+
+  // add code for logging additional sensors here
 }
