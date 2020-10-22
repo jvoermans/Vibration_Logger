@@ -368,6 +368,27 @@ class BinaryFolderParser():
 
         plt.show()
 
+    def get_ADC_data(self):
+        list_ADC_data = []
+
+        for crrt_channel in range(self.n_ADC_channels):
+            list_ADC_data.append(self.dict_data["ADC_{}".format(crrt_channel)]["readings"])
+
+        return (self.fn_unrolled_arduino_micros_to_datetime(self.dict_data["ADC_micros_unwrapped"]),
+                list_ADC_data)
+
+    def get_CHR_messages(self):
+        return (self.fn_unrolled_arduino_micros_to_datetime(self.dict_data["CHR_micros_unwrapped"]),
+                self.dict_data["CHR_messages"])
+
+
+class SlidingParser():
+    # given folder, list the data files there, and order the list
+    # parse first file, dump ignoring the last CHR message
+    # now parse files 2 by 2, starting with the 1st one, dump ignoring the last CHR message, advancing 1 at a time
+    # each time dumping, recall the date of the ignored message and start from this the next dump
+    # this way, parse large amounts of data without missing messages in the end
+    pass
 
 if __name__ == "__main__":
     import pprint
@@ -380,8 +401,6 @@ if __name__ == "__main__":
     binary_folder_parser.plt_adc_data()
 
     # TODO:
-    # - get ADC data: time base + data as a list of channels
-    # - get char data: function to 1) select the chr packets 2) interact with them to extract the information -> get utc datetime vector + list of data returned
     # - add example with GPRMC on how to extract (lat, lon) tuples
     # - add some dump functionality
 
