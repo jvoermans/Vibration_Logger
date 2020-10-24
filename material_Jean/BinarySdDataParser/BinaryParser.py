@@ -34,6 +34,9 @@ class DataEntry():
 
 
 class BinaryFileParser():
+    """Parse an individual file, by reading the binary data blocks,
+    and generating micros timestamps and corresponding entry lists
+    for both ADC and CHR."""
     ADC_indicator = 65
     CHR_indicator = 67
     n_ADC_entries_per_block = 250
@@ -188,6 +191,9 @@ def unwrapp_list_micros(list_micros, max_logging_delta=1000000 * 60 * 15, wrap_v
 
 
 class BinaryFolderParser():
+    """Parse either the whole content of a folder, or a list of files,
+    parsing each file individually and putting the corresponding data
+    together. Perform micros to utc datetime regression."""
     # the minimum number of PPS inputs for performing a meaningful fit
     min_nbr_PPS_inputs = 5
 
@@ -426,10 +432,18 @@ class BinaryFolderParser():
 
 
 class SlidingParser():
+    """Perform a 'sliding parsing' of all the files in a folder. This allows to
+    both save memory as only a couple of files are loaded at the same time,
+    but take care that all messages are fully reconstructed. Dump the parsed data
+    in 1 pkl file per binary file."""
     def __init__(self, folder):
         self.folder = folder
         ras(isinstance(self.folder, Path))
         self.list_files = sorted(list(self.folder.glob("F*.bin")))
+
+        self.dict_metadata = {}
+        self.dict_metadata["ADC"] = {}
+        self.dict_metadata["CHR"] = {}
 
         # when parsing, always dump until the end of the ADC data, and until
         # the end of the previous last CHR data
@@ -444,6 +458,11 @@ class SlidingParser():
         for crrt_ind_start in tqdm(range(len(self.list_files) - 1)):
             crrt_pair_files = [self.list_files[crrt_ind_start], self.list_files[crrt_ind_start + 1]]
             time_start_CHR, time_start_ADC = self._process_entries(crrt_pair_files, time_start_CHR, time_start_ADC)
+
+        path_dump_metadata = folder.joinpath("sliding_metadata.pkl")
+
+        with open(str(path_dump_metadata), "wb") as fh:
+            pickle.dump(self.dict_metadata, fh)
 
     def _process_entries(self, list_sliding_files, time_start_CHR, time_start_ADC):
         """list_sliding_files: the files to look at
@@ -476,6 +495,9 @@ class SlidingParser():
 
         time_last_dumped_ADC = timestamps_ADC[-1]
 
+        self.dict_metadata["ADC"]["time_limits_{}".format(filename)] = \
+            [timestamps_ADC[idx_timestamp_start], timestamps_ADC[-1]]
+
         timestamps_CHR, data_CHR = binary_folder_parser.get_CHR_messages()
         idx_timestamp_start = np.searchsorted(np.array(timestamps_CHR), time_start_CHR, side="right")
 
@@ -483,6 +505,9 @@ class SlidingParser():
         dict_data["CHR"]["messages"] = data_CHR[idx_timestamp_start:-1]
 
         time_last_dumped_CHR = timestamps_CHR[-2]
+
+        self.dict_metadata["CHR"]["time_limits_{}".format(filename)] = \
+            [timestamps_CHR[idx_timestamp_start], timestamps_CHR[-2]]
 
         with open(str(dump_path), "wb") as fh:
             pickle.dump(dict_data, fh)
@@ -498,14 +523,3 @@ if __name__ == "__main__":
     folder = Path("./example_data/")
 
     SlidingParser(folder)
-
-    # TODO:
-    # - add example with GPRMC on how to extract (lat, lon) tuples
-    # - add some dump functionality
-
-    # TODO:
-    # - split parsing effort between segments of several files, to avoid memory run out for long time series.
-    # - do something like: sliding average over segments, to make sure no message lost. At fusion between the sliding averages, take away duplicated data.
-
-    # TODO:
-    # micros overflow after ardound 70 minutes. Test logging on a whole day, and check that the parser works fine also when overflow takes place.
