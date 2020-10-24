@@ -9,6 +9,10 @@ import pynmea2
 
 import datetime
 
+from tqdm import tqdm
+
+import pickle
+
 from raise_assert import ras
 
 import matplotlib.pyplot as plt
@@ -383,6 +387,7 @@ class BinaryFolderParser():
             self.valid_PPS = False
 
     def plt_adc_data(self):
+        """Plot the ADC data."""
         plt.figure()
 
         for crrt_channel in range(self.n_ADC_channels):
@@ -399,6 +404,11 @@ class BinaryFolderParser():
         plt.show()
 
     def get_ADC_data(self):
+        """Get the ADC data. returns a tuple (timestamps, ADC_data).
+        The timestamps is a list of UTC datetimes. The ADC_data is a
+        list of ADC channels data, where each ADC channels data is a list
+        of measurements. Ie., ADC_data[0][:] are the data for the channel
+        0, where the measurements correpond to the times in timestamps."""
         list_ADC_data = []
 
         for crrt_channel in range(self.n_ADC_channels):
@@ -408,17 +418,77 @@ class BinaryFolderParser():
                 list_ADC_data)
 
     def get_CHR_messages(self):
+        """Get all available CHR messages. Returns a tuple (timestamps, CHR_messages),
+        where timestamps is a list of UTC datetimes, and CHR_messages is a list of
+        messages, which were received at the timestamps times."""
         return (self.fn_unrolled_arduino_micros_to_datetime(self.dict_data["CHR_micros_unwrapped"]),
                 self.dict_data["CHR_messages"])
 
 
 class SlidingParser():
-    # given folder, list the data files there, and order the list
-    # parse first file, dump ignoring the last CHR message
-    # now parse files 2 by 2, starting with the 1st one, dump ignoring the last CHR message, advancing 1 at a time
-    # each time dumping, recall the date of the ignored message and start from this the next dump
-    # this way, parse large amounts of data without missing messages in the end
-    pass
+    def __init__(self, folder):
+        self.folder = folder
+        ras(isinstance(self.folder, Path))
+        self.list_files = sorted(list(self.folder.glob("F*.bin")))
+
+        # when parsing, always dump until the end of the ADC data, and until
+        # the end of the previous last CHR data
+
+        time_start_CHR = datetime.datetime(1970, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
+        time_start_ADC = datetime.datetime(1970, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
+
+        # parse the first file alone
+        time_start_CHR, time_start_ADC = self._process_entries([self.list_files[0]], time_start_CHR, time_start_ADC)
+
+        # from now on, parse all files in pairs
+        for crrt_ind_start in tqdm(range(len(self.list_files) - 1)):
+            crrt_pair_files = [self.list_files[crrt_ind_start], self.list_files[crrt_ind_start + 1]]
+            time_start_CHR, time_start_ADC = self._process_entries(crrt_pair_files, time_start_CHR, time_start_ADC)
+
+    def _process_entries(self, list_sliding_files, time_start_CHR, time_start_ADC):
+        """list_sliding_files: the files to look at
+        time_start_CHR: the (excluded, start after) time where to start dumping CHR
+        time_start_ADC: the (excluded, start after) time where to start dumping ADC.
+        Return the time of the last CHR and ADC dump."""
+
+        # under which path to dump
+        path_dump = list_sliding_files[-1]
+        filename = path_dump.stem + ".pkl"
+        folder = path_dump.parent
+        dump_path = folder.joinpath(filename)
+
+        # the data object to dump
+        dict_data = {}
+        dict_data["ADC"] = {}
+        dict_data["CHR"] = {}
+
+        # parse
+        binary_folder_parser = BinaryFolderParser(list_files=list_sliding_files)
+
+        # dump only the necessary part, and update the end of dumping times
+        timestamps_ADC, data_ADC = binary_folder_parser.get_ADC_data()
+        idx_timestamp_start = np.searchsorted(np.array(timestamps_ADC), time_start_ADC, side="right")
+
+        dict_data["ADC"]["timestamps"] = timestamps_ADC[idx_timestamp_start:]
+
+        for crrt_channel in range(len(data_ADC)):
+            dict_data["ADC"]["channel_{}".format(crrt_channel)] = data_ADC[crrt_channel][idx_timestamp_start:]
+
+        time_last_dumped_ADC = timestamps_ADC[-1]
+
+        timestamps_CHR, data_CHR = binary_folder_parser.get_CHR_messages()
+        idx_timestamp_start = np.searchsorted(np.array(timestamps_CHR), time_start_CHR, side="right")
+
+        dict_data["CHR"]["timestamps"] = timestamps_CHR[idx_timestamp_start:-1]
+        dict_data["CHR"]["messages"] = data_CHR[idx_timestamp_start:-1]
+
+        time_last_dumped_CHR = timestamps_CHR[-2]
+
+        with open(str(dump_path), "wb") as fh:
+            pickle.dump(dict_data, fh)
+
+        return (time_last_dumped_CHR, time_last_dumped_ADC)
+
 
 if __name__ == "__main__":
     import pprint
@@ -427,8 +497,7 @@ if __name__ == "__main__":
 
     folder = Path("./example_data/")
 
-    binary_folder_parser = BinaryFolderParser(folder=folder, show_plots=True)
-    binary_folder_parser.plt_adc_data()
+    SlidingParser(folder)
 
     # TODO:
     # - add example with GPRMC on how to extract (lat, lon) tuples
