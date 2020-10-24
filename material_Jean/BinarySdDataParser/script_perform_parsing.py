@@ -14,6 +14,8 @@ pp = PrettyPrinter(indent=2).pprint
 
 
 def dump_keys(d, lvl=0):
+    """Pretty print a dict showing only keys and size of the
+    list entries."""
     for k, v in iteritems(d):
         if type(v) == list:
             print("{}{}: size {}".format(lvl * ' ', k, len(v)))
