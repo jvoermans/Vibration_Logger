@@ -184,6 +184,9 @@ def unwrapp_list_micros(list_micros, max_logging_delta=1000000 * 60 * 15, wrap_v
 
 
 class BinaryFolderParser():
+    # the minimum number of PPS inputs for performing a meaningful fit
+    min_nbr_PPS_inputs = 5
+
     def __init__(self, list_files=None, folder=None, n_ADC_channels=5, show_plots=False):
         self.show_plots = show_plots
 
@@ -312,48 +315,72 @@ class BinaryFolderParser():
             ) for crrt_entry in self.dict_data["PPS_GPRMC_entries"]
         ]
 
-        # create list of valid fixes
-        list_valid_fixes = [(crrt_entry.status == 'A') for crrt_entry in self.dict_data["PPS_GPRMC_entries"]]
+        # enough PPS inputs to perform the fitting
+        if len(list_PPS_datetimes) > self.min_nbr_PPS_inputs:
+            # create list of valid fixes
+            list_valid_fixes = [(crrt_entry.status == 'A') for crrt_entry in self.dict_data["PPS_GPRMC_entries"]]
 
-        # keep only valid fixes for doing the fit
-        valid_PPS_entries = [ind for ind, valid_fix in enumerate(list_valid_fixes) if valid_fix]
-        valid_PPS_getter = itemgetter(*valid_PPS_entries)
+            # keep only valid fixes for doing the fit
+            valid_PPS_entries = [ind for ind, valid_fix in enumerate(list_valid_fixes) if valid_fix]
+            valid_PPS_getter = itemgetter(*valid_PPS_entries)
 
-        # perform the fitting
-        unrolled_arduino_PPS_micros = list(valid_PPS_getter(self.dict_data["PPS_entries_micros_unwrapped"]))
-        PPS_timestamps = valid_PPS_getter([crrt_datetime.timestamp() for crrt_datetime in list_PPS_datetimes])
+            # perform the fitting
+            unrolled_arduino_PPS_micros = list(valid_PPS_getter(self.dict_data["PPS_entries_micros_unwrapped"]))
+            PPS_timestamps = valid_PPS_getter([crrt_datetime.timestamp() for crrt_datetime in list_PPS_datetimes])
 
-        degree = 1
-        coeffs = np.polyfit(unrolled_arduino_PPS_micros, PPS_timestamps, degree)
-        self.polyfit_unrolled_micros_to_timestamp = np.poly1d(coeffs)
+            degree = 1
+            coeffs = np.polyfit(unrolled_arduino_PPS_micros, PPS_timestamps, degree)
+            self.polyfit_unrolled_micros_to_timestamp = np.poly1d(coeffs)
 
-        def fn_unrolled_arduino_micros_to_datetime(unrolled_arduino_micro):
-            ras(isinstance(unrolled_arduino_micro, list))
-            timestamp = self.polyfit_unrolled_micros_to_timestamp(unrolled_arduino_micro)
-            datetimes = [
-                datetime.datetime.utcfromtimestamp(crrt_timestamp).replace(tzinfo=datetime.timezone.utc)
-                for crrt_timestamp in timestamp
-            ]
-            return(datetimes)
+            def fn_unrolled_arduino_micros_to_datetime(unrolled_arduino_micro):
+                ras(isinstance(unrolled_arduino_micro, list))
+                timestamp = self.polyfit_unrolled_micros_to_timestamp(unrolled_arduino_micro)
+                datetimes = [
+                    datetime.datetime.utcfromtimestamp(crrt_timestamp).replace(tzinfo=datetime.timezone.utc)
+                    for crrt_timestamp in timestamp
+                ]
+                return(datetimes)
 
-        self.fn_unrolled_arduino_micros_to_datetime = fn_unrolled_arduino_micros_to_datetime
+            self.fn_unrolled_arduino_micros_to_datetime = fn_unrolled_arduino_micros_to_datetime
 
-        if show_fit:
-            datetime_from_unrolled_PPS_micros = self.fn_unrolled_arduino_micros_to_datetime(unrolled_arduino_PPS_micros)
+            self.valid_PPS = True
 
-            list_deviation_PPS_micros_vs_datetime = []
+            if show_fit:
+                datetime_from_unrolled_PPS_micros = self.fn_unrolled_arduino_micros_to_datetime(unrolled_arduino_PPS_micros)
 
-            for ind in range(len(datetime_from_unrolled_PPS_micros)):
-                crrt_from_micros = datetime_from_unrolled_PPS_micros[ind]
-                crrt_from_GPRMC = list_PPS_datetimes[ind]
+                list_deviation_PPS_micros_vs_datetime = []
 
-                list_deviation_PPS_micros_vs_datetime.append((crrt_from_GPRMC - crrt_from_micros).total_seconds())
+                for ind in range(len(datetime_from_unrolled_PPS_micros)):
+                    crrt_from_micros = datetime_from_unrolled_PPS_micros[ind]
+                    crrt_from_GPRMC = list_PPS_datetimes[ind]
 
-            plt.figure()
-            plt.plot(unrolled_arduino_PPS_micros, list_deviation_PPS_micros_vs_datetime)
-            plt.xlabel("arduino unrolled micros timestamp")
-            plt.ylabel("deviation GPRMC time vs. arduino micros converted to datetime [seconds]")
-            plt.show()
+                    list_deviation_PPS_micros_vs_datetime.append((crrt_from_GPRMC - crrt_from_micros).total_seconds())
+
+                plt.figure()
+                plt.plot(unrolled_arduino_PPS_micros, list_deviation_PPS_micros_vs_datetime)
+                plt.xlabel("arduino unrolled micros timestamp")
+                plt.ylabel("deviation GPRMC time vs. arduino micros converted to datetime [seconds]")
+                plt.show()
+
+        # not enough PPS input to perform the fiting: do none
+        else:
+            print("Not enough PPS inputs to perform a time fitting")
+            print("This may indicate that no valid GPS fix is obtained")
+            print("We now use identity as PPS fitting, which will mis-offset")
+            print("all time measurements to the UNIX period start ie")
+            print("01-01-1970")
+
+            def identity(unrolled_arduino_micro):
+                ras(isinstance(unrolled_arduino_micro, list))
+                datetimes = [
+                    datetime.datetime.utcfromtimestamp(crrt_timestamp).replace(tzinfo=datetime.timezone.utc)
+                    for crrt_timestamp in unrolled_arduino_micro
+                ]
+                return(datetimes)
+
+            self.fn_unrolled_arduino_micros_to_datetime = identity
+
+            self.valid_PPS = False
 
     def plt_adc_data(self):
         plt.figure()
@@ -365,6 +392,9 @@ class BinaryFolderParser():
 
         plt.ylabel("ADC reading [12 bits]")
         plt.legend(loc="upper right")
+
+        if not self.valid_PPS:
+            plt.xlabel("no PPS as no GPS fix; dates wrongly offser")
 
         plt.show()
 
