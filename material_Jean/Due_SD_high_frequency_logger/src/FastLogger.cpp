@@ -115,10 +115,10 @@ bool FastLogger::start_recording()
 
     // setup the SD card
     const uint8_t SD_CS_PIN = sd_card_select_pin;
-    #define SD_CONFIG SdSpiConfig(SD_CS_PIN, DEDICATED_SPI, SD_SCK_MHZ(25))
+    SdSpiConfig sd_config{SD_CS_PIN, DEDICATED_SPI, SD_SCK_MHZ(25)};
 
     if (sd_is_active){
-        if (!sd_object.begin(SD_CONFIG))
+        if (!sd_object.begin(sd_config))
         {
             sd_object.initErrorHalt(&Serial);
         }
