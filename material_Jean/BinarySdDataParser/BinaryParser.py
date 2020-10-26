@@ -514,3 +514,15 @@ class SlidingParser():
             pickle.dump(dict_data, fh)
 
         return (time_last_dumped_CHR, time_last_dumped_ADC)
+
+
+def GPRMC_extractor(dict_data):
+    list_CHR_messages = dict_data["CHR"]["messages"]
+    list_parsed_GPRMC = []
+
+    for crrt_msg in list_CHR_messages:
+        if crrt_msg[0:6] == "$GPRMC":
+            crrt_parsed_gprmc = pynmea2.parse(crrt_msg.split('\\')[0])
+            list_parsed_GPRMC.append(crrt_parsed_gprmc)
+
+    return list_parsed_GPRMC

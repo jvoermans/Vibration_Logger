@@ -9,6 +9,7 @@ import pickle
 from pprint import PrettyPrinter
 
 from BinaryParser import SlidingParser
+from BinaryParser import GPRMC_extractor
 
 import matplotlib.pyplot as plt
 
@@ -46,14 +47,14 @@ with open(str(path_to_folder_data.joinpath("F00000000.pkl")), "br") as fh:
 # the keys of any data file should be self explanatory
 dump_keys(dict_data_example)
 
-# so to access the data, for example entries 2 and 3 of ADC:
-print(dict_data_example["ADC"]["timestamps"][2:4])
-print(dict_data_example["ADC"]["channel_0"][2:4])
-print(dict_data_example["ADC"]["channel_1"][2:4])
-
-# or accessing some CHR data
-print(dict_data_example["CHR"]["timestamps"][2:4])
-print(dict_data_example["CHR"]["messages"][2:4])
+# # so to access the data, for example entries 2 and 3 of ADC:
+# print(dict_data_example["ADC"]["timestamps"][2:4])
+# print(dict_data_example["ADC"]["channel_0"][2:4])
+# print(dict_data_example["ADC"]["channel_1"][2:4])
+# 
+# # or accessing some CHR data
+# print(dict_data_example["CHR"]["timestamps"][2:4])
+# print(dict_data_example["CHR"]["messages"][2:4])
 
 # for example, it is easy to plot all ADC data:
 plt.figure()
@@ -64,4 +65,10 @@ for crrt_channel in range(5):
     )
 plt.show()
 
-# TODO: add an example of extracting the GPS data
+# now can use some of the extractor tools to get message data
+parsed_gprmc = GPRMC_extractor(dict_data_example)
+# for example these are the 2 first parsed GPRMC messages
+print(parsed_gprmc[0:2])
+# at this stage, the usual interface to the parsed pynmea sentences will apply
+
+# TODO: add parsing of other sensors
