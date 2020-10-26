@@ -10,9 +10,11 @@ from pprint import PrettyPrinter
 
 from BinaryParser import SlidingParser
 
+import matplotlib.pyplot as plt
+
 pp = PrettyPrinter(indent=2).pprint
 
-
+# just a small helper function for displaying the available data
 def dump_keys(d, lvl=0):
     """Pretty print a dict showing only keys and size of the
     list entries."""
@@ -27,10 +29,10 @@ def dump_keys(d, lvl=0):
 # path to the data to parse
 path_to_folder_data = Path("./example_data_Joey")
 
-# this will parse all files
+# this will parse all files, and dump the parsed information in pkl files
 SlidingParser(path_to_folder_data)
 
-# the resulting data are:
+# the resulting data can be loaded directly from the pkl binary dumps. These are:
 # - the metadata:
 with open(str(path_to_folder_data.joinpath("sliding_metadata.pkl")), "br") as fh:
     dict_metadata = pickle.load(fh)
@@ -52,3 +54,12 @@ print(dict_data_example["ADC"]["channel_1"][2:4])
 # or accessing some CHR data
 print(dict_data_example["CHR"]["timestamps"][2:4])
 print(dict_data_example["CHR"]["messages"][2:4])
+
+# for example, it is easy to plot all ADC data:
+plt.figure()
+for crrt_channel in range(5):
+    plt.plot(
+        dict_data_example["ADC"]["timestamps"], dict_data_example["ADC"]["channel_{}".format(crrt_channel)],
+        label="channel {}".format(crrt_channel)
+    )
+plt.show()
