@@ -25,7 +25,7 @@ def dump_keys(d, lvl=0):
                 dump_keys(v, lvl+1)
 
 # path to the data to parse
-path_to_folder_data = Path("./example_data/")
+path_to_folder_data = Path("./example_data_Joey")
 
 # this will parse all files
 SlidingParser(path_to_folder_data)

@@ -170,22 +170,23 @@ def unwrapp_list_micros(list_micros, max_logging_delta=1000000 * 60 * 15, wrap_v
     crrt_unwrapping_value = 0
 
     # at least the first entry is always unwrapped...
-    previous_entry_unwrapped = list_micros[0]
-    list_unwrapped_micros.append(previous_entry_unwrapped)
+    if len(list_micros) > 0:
+        previous_entry_unwrapped = list_micros[0]
+        list_unwrapped_micros.append(previous_entry_unwrapped)
 
-    for crrt_entry in list_micros[1:]:
-        crrt_entry_unwrapped = crrt_entry + crrt_unwrapping_value
+        for crrt_entry in list_micros[1:]:
+            crrt_entry_unwrapped = crrt_entry + crrt_unwrapping_value
 
-        if crrt_entry_unwrapped < previous_entry_unwrapped:
-            # close enough to a wrapping point: that was true wrapping
-            if (((previous_entry_unwrapped + max_logging_delta) % wrap_value) < (previous_entry_unwrapped % wrap_value)):
-                crrt_entry_unwrapped += wrap_value
-                crrt_unwrapping_value += wrap_value
-            else:
-                raise ValueError("We observe wrapping, but we are far away from the wrapping point!")
+            if crrt_entry_unwrapped < previous_entry_unwrapped:
+                # close enough to a wrapping point: that was true wrapping
+                if (((previous_entry_unwrapped + max_logging_delta) % wrap_value) < (previous_entry_unwrapped % wrap_value)):
+                    crrt_entry_unwrapped += wrap_value
+                    crrt_unwrapping_value += wrap_value
+                else:
+                    raise ValueError("We observe wrapping, but we are far away from the wrapping point!")
 
-        list_unwrapped_micros.append(crrt_entry_unwrapped)
-        previous_entry_unwrapped = crrt_entry_unwrapped
+            list_unwrapped_micros.append(crrt_entry_unwrapped)
+            previous_entry_unwrapped = crrt_entry_unwrapped
 
     return list_unwrapped_micros
 
@@ -266,7 +267,7 @@ class BinaryFolderParser():
 
         crrt_chr_entry_index = 0
 
-        while crrt_chr_entry_index < nbr_chr_entries:
+        while crrt_chr_entry_index < nbr_chr_entries - 1:
             crrt_entry = list_chr_entries[crrt_chr_entry_index]
 
             if crrt_entry[0] == 'M' and len(crrt_entry) == 10:
@@ -383,7 +384,7 @@ class BinaryFolderParser():
             def identity(unrolled_arduino_micro):
                 ras(isinstance(unrolled_arduino_micro, list))
                 datetimes = [
-                    datetime.datetime.utcfromtimestamp(crrt_timestamp).replace(tzinfo=datetime.timezone.utc)
+                    datetime.datetime.utcfromtimestamp(crrt_timestamp * 0.000001).replace(tzinfo=datetime.timezone.utc)
                     for crrt_timestamp in unrolled_arduino_micro
                 ]
                 return(datetimes)
@@ -513,13 +514,3 @@ class SlidingParser():
             pickle.dump(dict_data, fh)
 
         return (time_last_dumped_CHR, time_last_dumped_ADC)
-
-
-if __name__ == "__main__":
-    import pprint
-
-    pp = pprint.PrettyPrinter(indent=2).pprint
-
-    folder = Path("./example_data/")
-
-    SlidingParser(folder)
