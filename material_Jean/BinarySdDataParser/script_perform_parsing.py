@@ -27,7 +27,7 @@ def dump_keys(d, lvl=0):
                 dump_keys(v, lvl+1)
 
 # path to the data to parse
-path_to_folder_data = Path("./example_data_Joey")
+path_to_folder_data = Path("./example_data")
 
 # this will parse all files, and dump the parsed information in pkl files
 SlidingParser(path_to_folder_data)
@@ -63,3 +63,5 @@ for crrt_channel in range(5):
         label="channel {}".format(crrt_channel)
     )
 plt.show()
+
+# TODO: add an example of extracting the GPS data
