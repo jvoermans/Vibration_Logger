@@ -36,7 +36,10 @@
 #include <Arduino.h>
 
 #include <FastLogger.h>
+
 #include <GPS_manager.h>
+
+#include <TemperatureSensor.h>
 
 FastLogger fast_logger;
 
