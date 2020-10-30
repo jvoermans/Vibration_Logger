@@ -6,6 +6,8 @@
 #include "Arduino.h"
 #include "SdFat.h"
 
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
 // parameters related to the ADC channels logging
 
 // the adc_channels to read, in uC reference, NOT in Arduino Due pinout reference
@@ -28,6 +30,8 @@ constexpr int adc_sampling_frequency = 1000;
 // the prescaler should be 100 for 1kHz, 15 for 10kHz, 2 for 100kHz
 constexpr uint8_t adc_prescale = 100;
 
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
 // parameters related to the SD card and logging file
 
 // the duration of each individual binary file in seconds
@@ -47,9 +51,22 @@ typedef FsFile file_t;
 // the default SS pin on due is the digital pin 10
 const uint8_t sd_card_select_pin = SS;
 
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
 // parameters related to the GPS
 
 constexpr HardwareSerial * selected_gps_serial = &Serial1;
 constexpr uint8_t selected_PPS_digital_pin = 2;
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+// parameters related to the temperature sensors
+
+// using the I2C multiplexer TCA9548A
+// https://learn.adafruit.com/adafruit-tca9548a-1-to-8-i2c-multiplexer-breakout/wiring-and-test
+constexpr byte i2c_multiplexer_address = 0x70;
+
+// how many temperature sensors to use, multiplexed by the I2C multiplier
+constexpr int nbr_temp_sensors = 4;
 
 #endif // !PARAMS_HFLOGGER

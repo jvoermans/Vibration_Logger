@@ -39,11 +39,14 @@
 
 #include <GPS_manager.h>
 
-#include <TemperatureSensor.h>
+#include <Wire.h>
+#include <TemperatureSensors.h>
 
 FastLogger fast_logger;
 
 GPSManager gps_manager;
+
+TemperatureSensorsManager temperature_sensors_manager;
 
 static constexpr bool use_serial_debug = true;
 static constexpr bool disable_sd_card = false;
@@ -61,12 +64,19 @@ void setup() {
     gps_manager.enable_serial_debug_output();
   }
 
+  Wire.begin();
+  delay(10);
+
+  temperature_sensors_manager.enable_serial_output(use_serial_debug);
+  temperature_sensors_manager.start_sensors();
+
   if (disable_sd_card){
     fast_logger.disable_SD();
   }
 
   fast_logger.start_recording();
   gps_manager.start_gps();
+  temperature_sensors_manager.start_new_measurement();
 
   fast_logger.log_cstring("Start!");
 }
@@ -84,5 +94,9 @@ void loop() {
     fast_logger.log_cstring(gps_manager.get_message());
   }
 
-  // add code for logging additional sensors here
+  // take care of the temperature sensors
+  if (temperature_sensors_manager.is_available()){
+    fast_logger.log_cstring(temperature_sensors_manager.get_message());
+    temperature_sensors_manager.start_new_measurement();
+  }
 }
