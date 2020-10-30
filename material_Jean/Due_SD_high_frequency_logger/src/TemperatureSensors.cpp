@@ -7,12 +7,20 @@ void TemperatureSensorsManager::enable_serial_output(bool enable_serial){
 }
 
 void TemperatureSensorsManager::start_sensors(void){
+    if (serial_output){
+        Serial.println(F("Start temperature sensors"));
+    }
+
     // reset all temperature sensors
     for (size_t i = 0; i < nbr_temp_sensors; i++){
         send_i2c_command_start_tmp_sensor(i);
     }
 
     delay(10);
+
+    if (serial_output){
+        Serial.println(F("get temperature calibration values"));
+    }
 
     // get the calibration coefficients of each sensor
     for (size_t i = 0; i < nbr_temp_sensors; i++){
@@ -33,6 +41,11 @@ void TemperatureSensorsManager::start_sensors(void){
 void TemperatureSensorsManager::start_new_measurement(void){
     // if enough tie since last measurement, start a new one
     if (micros() - time_start_measurement_micros > duration_reading_micros){
+
+        if (serial_output){
+            Serial.println(F("start new measurement"));
+        }
+
         time_start_measurement_micros = micros();
 
         // ask for a new measurement on each of the sensors
@@ -53,6 +66,10 @@ bool TemperatureSensorsManager::is_available(void){
 
 char * TemperatureSensorsManager::get_message(void){
     if (is_available()){
+        if (serial_output){
+            Serial.println(F("update temperature message"));
+        }
+
         // loop over channels
         for (size_t crrt_channel = 0; crrt_channel < nbr_temp_sensors; crrt_channel++){
             // get reading
@@ -68,6 +85,10 @@ char * TemperatureSensorsManager::get_message(void){
     }
 
     buffer_message[length_tmp_msg_buffer - 2] = '\0';
+
+    if (serial_output){
+        Serial.println(buffer_message);
+    }
 
     return buffer_message;
 }

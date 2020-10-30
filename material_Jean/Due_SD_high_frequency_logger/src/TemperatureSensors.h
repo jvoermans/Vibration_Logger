@@ -6,11 +6,6 @@
 
 constexpr size_t length_tmp_msg_buffer = 5 + 6 * nbr_temp_sensors + 1;
 
-// the duration we allow for taking one measurement
-// needs to be slow enough that the conversion is finished
-// the datasheet says that it can take up to 40ms, so saying 50 to have a bit of margin
-constexpr unsigned long duration_reading_micros = 50000;
-
 constexpr byte TCAADDR = 0x70;
 
 constexpr byte TSYS01_ADDR                      = 0x77; 
