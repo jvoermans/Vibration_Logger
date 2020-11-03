@@ -9,7 +9,7 @@ import pickle
 from pprint import PrettyPrinter
 
 from BinaryParser import SlidingParser
-from BinaryParser import GPRMC_extractor
+from BinaryParser import GPRMC_extractor, temperatures_extractor
 
 import matplotlib.pyplot as plt
 
@@ -72,8 +72,8 @@ print()
 print(parsed_gprmc[0:2])
 # at this stage, the usual interface to the parsed pynmea sentences will apply
 
-# TODO: add parsing of other sensors
-# TODO: add parsing temperature sensors
-print()
-print(dict_data_example["CHR"]["timestamps"][0:20])
-print(dict_data_example["CHR"]["messages"][0:20])
+temperature_reading_timestamps, temperature_reading_values = temperatures_extractor(dict_data_example)
+
+for ind in range(4):
+    print("{} : {}".format(temperature_reading_timestamps[ind],
+                           temperature_reading_values[ind]))

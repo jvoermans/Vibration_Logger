@@ -526,3 +526,25 @@ def GPRMC_extractor(dict_data):
             list_parsed_GPRMC.append(crrt_parsed_gprmc)
 
     return list_parsed_GPRMC
+
+
+def temperatures_extractor(dict_data):
+    list_CHR_messages = dict_data["CHR"]["messages"]
+    list_CHR_timestamps = dict_data["CHR"]["timestamps"]
+
+    list_temperatures_timestamps = []
+    list_temperatures_readings = []
+
+    for (crrt_timestamp, crrt_message) in zip(list_CHR_timestamps, list_CHR_messages):
+        if crrt_message[0:4] == "TMP,":
+            crrt_list_temperatures = []
+            crrt_temperatures_readings = (crrt_message[4:]).split(",")
+
+            for crrt_reading in crrt_temperatures_readings:
+                if crrt_reading != "":
+                    crrt_list_temperatures.append(float(crrt_reading))
+
+            list_temperatures_timestamps.append(crrt_timestamp)
+            list_temperatures_readings.append(crrt_list_temperatures)
+
+    return (list_temperatures_timestamps, list_temperatures_readings)
