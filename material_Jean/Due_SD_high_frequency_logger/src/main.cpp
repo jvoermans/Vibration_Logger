@@ -70,13 +70,11 @@ void setup() {
   if (use_serial_debug){
     fast_logger.enable_serial_debug_output();
     gps_manager.enable_serial_debug_output();
+    temperature_sensors_manager.enable_serial_output();
   }
 
   Wire.begin();
   delay(10);
-
-  temperature_sensors_manager.enable_serial_output(use_serial_debug);
-  temperature_sensors_manager.start_sensors();
 
   if (disable_sd_card){
     fast_logger.disable_SD();
@@ -84,6 +82,7 @@ void setup() {
 
   fast_logger.start_recording();
   gps_manager.start_gps();
+  temperature_sensors_manager.start_sensors();
 
   fast_logger.log_cstring("Start!");
 }

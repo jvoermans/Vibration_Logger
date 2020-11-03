@@ -2,7 +2,7 @@
 
 // TODO: add the serial debug information
 
-void TemperatureSensorsManager::enable_serial_output(bool enable_serial){
+void TemperatureSensorsManager::enable_serial_output(bool enable_serial=true){
     serial_output = enable_serial;
 }
 
