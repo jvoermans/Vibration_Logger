@@ -33,6 +33,14 @@
 // ExFatFormatter.ino to format in the best way
 // SdInfo.ino to check that the formatting went well
 
+// Temperature sensors
+
+// the wiring is:
+// Arduino Due -> multiplexer -> channel 0: temperature sensor 0
+//                            -> channel 1: temperature sensor 1
+//                            ...
+//                            -> channel n: temperature sensor n
+
 #include <Arduino.h>
 
 #include <FastLogger.h>
