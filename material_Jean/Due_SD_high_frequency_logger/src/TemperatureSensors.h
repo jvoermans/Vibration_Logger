@@ -23,7 +23,7 @@ constexpr byte TSYS01_PROM_READ                 = 0XA0;
 // message with all the data
 class TemperatureSensorsManager{
     public:
-        void enable_serial_output(bool);
+        void enable_serial_output(bool enable_serial = true);
 
         void start_sensors(void);
 
