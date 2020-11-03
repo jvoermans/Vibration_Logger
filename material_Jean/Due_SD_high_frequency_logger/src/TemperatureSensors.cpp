@@ -36,6 +36,10 @@ void TemperatureSensorsManager::start_sensors(void){
     buffer_message[3] = ',';
 
     buffer_message[length_tmp_msg_buffer - 1] = '\0';
+
+    // set the reference time for start of measurements and start first measurement
+    time_start_measurement_micros = micros() - duration_reading_micros - 1;
+    start_new_measurement();
 }
 
 void TemperatureSensorsManager::start_new_measurement(void){
@@ -46,7 +50,7 @@ void TemperatureSensorsManager::start_new_measurement(void){
             Serial.println(F("start new measurement"));
         }
 
-        time_start_measurement_micros = micros();
+        time_start_measurement_micros += duration_reading_micros;
 
         // ask for a new measurement on each of the sensors
         for (uint8_t channel_nbr = 0; channel_nbr < nbr_temp_sensors; channel_nbr++){

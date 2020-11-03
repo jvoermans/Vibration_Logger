@@ -71,8 +71,8 @@ constexpr int nbr_temp_sensors = 4;
 
 // the duration we allow for taking one measurement
 // needs to be slow enough that the conversion is finished
-// the datasheet says that it can take up to 10ms, so saying 50ms to have a bit of margin
+// the datasheet says that it can take up to 10ms, so saying 100ms to have quite a bit of margin
 // using a larger value will further reduce the frequency of temperature measurements
-constexpr unsigned long duration_reading_micros = 50000;
+constexpr unsigned long duration_reading_micros = 100000;
 
 #endif // !PARAMS_HFLOGGER

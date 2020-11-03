@@ -84,7 +84,6 @@ void setup() {
 
   fast_logger.start_recording();
   gps_manager.start_gps();
-  temperature_sensors_manager.start_new_measurement();
 
   fast_logger.log_cstring("Start!");
 }
