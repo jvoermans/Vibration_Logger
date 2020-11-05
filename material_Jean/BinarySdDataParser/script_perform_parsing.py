@@ -28,7 +28,7 @@ def dump_keys(d, lvl=0):
                 dump_keys(v, lvl+1)
 
 # path to the data to parse
-path_to_folder_data = Path("./all_example_data/example_data_Joey_temperatureprobe/")
+path_to_folder_data = Path("./all_example_data/example_data_Joey_temperatureprobe2/")
 
 # this will parse all files, and dump the parsed information in pkl files
 SlidingParser(path_to_folder_data)
@@ -41,7 +41,7 @@ with open(str(path_to_folder_data.joinpath("sliding_metadata.pkl")), "br") as fh
 pp(dict_metadata)
 
 # - the data corresponding to each file:
-with open(str(path_to_folder_data.joinpath("F00000005.pkl")), "br") as fh:
+with open(str(path_to_folder_data.joinpath("F00000022.pkl")), "br") as fh:
     dict_data_example = pickle.load(fh)
 
 # the keys of any data file should be self explanatory
@@ -74,6 +74,6 @@ print(parsed_gprmc[0:2])
 
 temperature_reading_timestamps, temperature_reading_values = temperatures_extractor(dict_data_example)
 
-for ind in range(4):
+for ind in range(20):
     print("{} : {}".format(temperature_reading_timestamps[ind],
                            temperature_reading_values[ind]))
