@@ -58,6 +58,18 @@ static_assert(sizeof(BlockCharsWithMetadata) == 512);
 ////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////
 
+// a struct containing statistics about a time series
+struct TimeSeriesStatistics{
+    double mean; // mean(X)
+    double mean_of_square; // mean(X**2)
+    double max; // max value reached
+    double min; // min value reached
+    unsigned long extremal_count; // nbr of readings over or under mean +- percent_threshold
+};
+
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+
 // getting the interrupt related stuff into the class is tricky, keep it outside
 // TODO: read about ISRs, classes, etc
 // TODO: ask for explanation why did not work in SO issue
@@ -89,6 +101,21 @@ void tc_setup();
 // update the time index
 // set flag conversion ready
 void ADC_Handler();
+
+// a class to take care of tracking time series statistics
+class TimeSeriesAnalyzer{
+    public:
+        bool stats_available();
+        TimeSeriesStatistics get_stats();
+
+    private:
+        bool flag_stats_available;
+        int crrt_nbr_registered_values;
+        void reset_filling_stats();
+        void register_value(int value_in);
+        TimeSeriesStatistics crrt_filling_stats;
+        TimeSeriesStatistics available_stats;
+};
 
 // the wrapper class for simple user interface
 class FastLogger
