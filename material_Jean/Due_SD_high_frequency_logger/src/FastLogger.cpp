@@ -10,6 +10,9 @@ volatile int crrt_adc_data_index_to_write = 0;
 
 volatile BlockADCWithMetadata blocks_adc_with_metdata[nbr_of_adc_channels][nbr_blocks_per_adc_channel];
 
+TimeSeriesAnalyzer analyzers_adc_channels[nbr_of_adc_channels];
+char timeseries_buffer_stats_dump[120];
+
 void setup_adc_buffer_metadata()
 {
     for (size_t crrt_adc_channel_index = 0; crrt_adc_channel_index < nbr_of_adc_channels; crrt_adc_channel_index++)
@@ -70,6 +73,7 @@ void ADC_Handler()
     for (size_t crrt_adc_channel = 0; crrt_adc_channel < nbr_of_adc_channels; crrt_adc_channel++)
     {
         uint16_t crrt_value = static_cast<volatile uint16_t>(*(ADC->ADC_CDR + adc_channels[crrt_adc_channel]) & 0x0FFFF);
+        analyzers_adc_channels[crrt_adc_channel].register_value(static_cast<int>(crrt_value));
         blocks_adc_with_metdata[crrt_adc_channel][crrt_adc_block_index_to_write].data[crrt_adc_data_index_to_write] = crrt_value;
     }
 
@@ -103,10 +107,76 @@ void ADC_Handler()
 ////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////
 
+// the statistics class
+
+void TimeSeriesAnalyzer::init(void){
+    flag_stats_available = false;
+    crrt_nbr_registered_values = 0;
+    reset_filling_stats();
+}
+
+bool TimeSeriesAnalyzer::stats_are_available(void) const{
+    return flag_stats_available;
+}
+
+TimeSeriesStatistics const & TimeSeriesAnalyzer::get_stats(void){
+    flag_stats_available = false;
+    return available_stats;
+}
+
+void TimeSeriesAnalyzer::register_value(int value_in){
+    crrt_nbr_registered_values += 1;
+
+    double value_in_dbl = static_cast<double>(value_in - middle_adc_value);
+
+    // update the current working structure
+    crrt_filling_stats.mean += value_in_dbl / static_cast<double>(nbr_of_samples_per_analysis);
+    crrt_filling_stats.mean_of_square += value_in_dbl * value_in_dbl / static_cast<double>(nbr_of_samples_per_analysis);
+    crrt_filling_stats.max = max(value_in_dbl, crrt_filling_stats.max);
+    crrt_filling_stats.min = min(value_in_dbl, crrt_filling_stats.min);
+
+    if ( (value_in_dbl > threshold_high) || (value_in_dbl < threshold_low) ){
+        crrt_filling_stats.extremal_count += 1;
+    }
+
+    // what to do if finished with the current working structure
+    if (crrt_nbr_registered_values >= nbr_of_samples_per_analysis){
+        // copy the crrt struct to the output one
+        available_stats.mean = crrt_filling_stats.mean;
+        available_stats.mean_of_square = crrt_filling_stats.mean_of_square;
+        available_stats.max = crrt_filling_stats.max;
+        available_stats.min = crrt_filling_stats.min;
+        available_stats.extremal_count = crrt_filling_stats.extremal_count;
+
+        // reset all crrt analysis values
+        reset_filling_stats();
+        crrt_nbr_registered_values = 0;
+
+        // stats are available now
+        flag_stats_available = true;
+    }
+}
+
+void TimeSeriesAnalyzer::reset_filling_stats(void){
+    crrt_filling_stats.mean = 0;
+    crrt_filling_stats.mean_of_square = 0;
+    crrt_filling_stats.max = -999999.0;
+    crrt_filling_stats.min = 999999.0;
+    crrt_filling_stats.extremal_count = 0;
+}
+
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+
 // the wrapper class stuff
 
 bool FastLogger::start_recording()
 {
+    // prepare all analyzers
+    for (size_t crrt_channel = 0; crrt_channel < nbr_of_adc_channels; crrt_channel++){
+        analyzers_adc_channels[crrt_channel].init();
+    }
+
     // setup the metadata in char data
     for (size_t crrt_char_block = 0; crrt_char_block < nbr_blocks_char; crrt_char_block++){
         blocks_cstring_with_metadata[crrt_char_block].metadata.metadata_id = 'C';
@@ -223,6 +293,18 @@ void FastLogger::internal_update()
                 }
                 blocks_to_write[index_to_examine] = false;
                 write_adc_blocks_to_sd_card(index_to_examine);
+            }
+        }
+
+        // check if some stats data to write
+        for (size_t crrt_channel = 0; crrt_channel < nbr_of_adc_channels; crrt_channel++){
+            if (analyzers_adc_channels[crrt_channel].stats_are_available()){
+                // post the current stats
+                TimeSeriesStatistics const & crrt_stats = analyzers_adc_channels[crrt_channel].get_stats();
+
+                // TODO: turn into a C-string into buffer_stats_dump and push
+
+                log_cstring(timeseries_buffer_stats_dump);
             }
         }
 

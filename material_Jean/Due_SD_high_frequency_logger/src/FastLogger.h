@@ -103,21 +103,41 @@ void tc_setup();
 void ADC_Handler();
 
 // a class to take care of tracking time series statistics
+// this will "eat" readings from an ADC channel, and generate on-the-fly stats about this channel
+// the stats are the ones descrived in the TimeSeriesStatistics
+// an updated stat struct is made available regularly, as soon as fully computed
 class TimeSeriesAnalyzer{
     public:
-        bool stats_available();
-        TimeSeriesStatistics get_stats();
+        void init(void);
+
+        // is there a stat struct available readily computed?
+        bool stats_are_available(void) const;
+
+        // get access to the computed stat struct available, and reset the availability flag
+        TimeSeriesStatistics const & get_stats(void);
+
+        // register a new value inside the current building stat
+        void register_value(int value_in);
 
     private:
+        // if an unread TimeSeriesStatistics is available
         bool flag_stats_available;
+
+        // how many points we have currently been registering into the stat under building
         int crrt_nbr_registered_values;
-        void reset_filling_stats();
-        void register_value(int value_in);
+
+        // reset the stat under buildind and the nbr of registered values
+        void reset_filling_stats(void);
+
+        // the stats under building
         TimeSeriesStatistics crrt_filling_stats;
+
+        // the available stat
         TimeSeriesStatistics available_stats;
 };
 
 // the wrapper class for simple user interface
+// this will allow to log fast both chars and ADC channels
 class FastLogger
 {
 public:
