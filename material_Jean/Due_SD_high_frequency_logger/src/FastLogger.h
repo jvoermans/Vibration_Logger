@@ -136,6 +136,8 @@ class TimeSeriesAnalyzer{
         TimeSeriesStatistics available_stats;
 };
 
+void write_statistics(char * buffer, TimeSeriesStatistics const & to_dump);
+
 // the wrapper class for simple user interface
 // this will allow to log fast both chars and ADC channels
 class FastLogger

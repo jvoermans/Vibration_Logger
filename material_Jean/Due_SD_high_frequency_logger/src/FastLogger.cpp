@@ -165,6 +165,32 @@ void TimeSeriesAnalyzer::reset_filling_stats(void){
     crrt_filling_stats.extremal_count = 0;
 }
 
+// TODO: test the functions under separately
+void append_buffer(char * main_buffer, char * to_add_buffer, int & pos_in_main_buffer){
+    strcpy(&main_buffer[pos_in_main_buffer], to_add_buffer);
+    pos_in_main_buffer += strlen(to_add_buffer);
+}
+
+void write_statistics(char * buffer, TimeSeriesStatistics const & to_dump){
+    char crrt_writeout[12];
+    int crrt_buffer_pos_to_write = 0;
+
+    sprintf(crrt_writeout, "%.2E,", to_dump.mean);
+    append_buffer(buffer, crrt_writeout, crrt_buffer_pos_to_write);
+
+    sprintf(crrt_writeout, "%.2E,", to_dump.mean_of_square);
+    append_buffer(buffer, crrt_writeout, crrt_buffer_pos_to_write);
+
+    sprintf(crrt_writeout, "%.2E,", to_dump.max);
+    append_buffer(buffer, crrt_writeout, crrt_buffer_pos_to_write);
+
+    sprintf(crrt_writeout, "%.2E,", to_dump.min);
+    append_buffer(buffer, crrt_writeout, crrt_buffer_pos_to_write);
+
+    sprintf(crrt_writeout, "%.2E;", to_dump.extremal_count);
+    append_buffer(buffer, crrt_writeout, crrt_buffer_pos_to_write);
+}
+
 ////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////
 
@@ -303,6 +329,7 @@ void FastLogger::internal_update()
                 TimeSeriesStatistics const & crrt_stats = analyzers_adc_channels[crrt_channel].get_stats();
 
                 // TODO: turn into a C-string into buffer_stats_dump and push
+                // TODO: start by saying this is stats on channel nbr N
 
                 log_cstring(timeseries_buffer_stats_dump);
             }
