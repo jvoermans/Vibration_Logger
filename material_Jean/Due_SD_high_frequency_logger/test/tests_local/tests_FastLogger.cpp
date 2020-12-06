@@ -1,4 +1,3 @@
-#include <FastLogger.h>
 #include <unity.h>
 
 void test_failing(void) {
