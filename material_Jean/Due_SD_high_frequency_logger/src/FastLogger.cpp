@@ -165,13 +165,12 @@ void TimeSeriesAnalyzer::reset_filling_stats(void){
     crrt_filling_stats.extremal_count = 0;
 }
 
-// TODO: test the functions under separately
 void append_buffer(char * main_buffer, char * to_add_buffer, int & pos_in_main_buffer){
     strcpy(&main_buffer[pos_in_main_buffer], to_add_buffer);
     pos_in_main_buffer += strlen(to_add_buffer);
 }
 
-void write_statistics(char * buffer, TimeSeriesStatistics const & to_dump){
+int write_statistics(char * buffer, TimeSeriesStatistics const & to_dump){
     char crrt_writeout[12];
     int crrt_buffer_pos_to_write = 0;
 
@@ -187,8 +186,10 @@ void write_statistics(char * buffer, TimeSeriesStatistics const & to_dump){
     sprintf(crrt_writeout, "%.2E,", to_dump.min);
     append_buffer(buffer, crrt_writeout, crrt_buffer_pos_to_write);
 
-    sprintf(crrt_writeout, "%.2E;", to_dump.extremal_count);
+    sprintf(crrt_writeout, "%.2E;", static_cast<double>(to_dump.extremal_count));
     append_buffer(buffer, crrt_writeout, crrt_buffer_pos_to_write);
+
+    return crrt_buffer_pos_to_write;
 }
 
 ////////////////////////////////////////////////////////////
@@ -241,6 +242,10 @@ bool FastLogger::stop_recording()
     close_crrt_file();
 
     return true;
+}
+
+bool FastLogger::is_active(){
+    return logging_is_active;
 }
 
 void FastLogger::log_char(const char crrt_char)
@@ -300,8 +305,7 @@ void FastLogger::log_cstring(const char *cstring)
     log_char(';');
 }
 
-void FastLogger::internal_update()
-{
+void FastLogger::internal_update(){
     if (logging_is_active)
     {
         // check if some data to write from the ADC
@@ -328,8 +332,24 @@ void FastLogger::internal_update()
                 // post the current stats
                 TimeSeriesStatistics const & crrt_stats = analyzers_adc_channels[crrt_channel].get_stats();
 
-                // TODO: turn into a C-string into buffer_stats_dump and push
-                // TODO: start by saying this is stats on channel nbr N
+                // packet information
+                timeseries_buffer_stats_dump[0] = 'S';
+                timeseries_buffer_stats_dump[1] = 'T';
+                timeseries_buffer_stats_dump[2] = 'A';
+                timeseries_buffer_stats_dump[3] = 'T';
+                char crrt_chnl[3];
+                sprintf(crrt_chnl, "%02i", crrt_channel);
+                timeseries_buffer_stats_dump[4] = crrt_chnl[0];
+                timeseries_buffer_stats_dump[5] = crrt_chnl[1];
+                timeseries_buffer_stats_dump[6] = ',';
+
+                // where to start writing the stats information
+                int nbr_chars_written = 0;
+
+                nbr_chars_written = write_statistics(&timeseries_buffer_stats_dump[7], crrt_stats);
+
+                timeseries_buffer_stats_dump[7 + nbr_chars_written] = ';';
+                timeseries_buffer_stats_dump[7 + nbr_chars_written + 1] = '\0';
 
                 log_cstring(timeseries_buffer_stats_dump);
             }

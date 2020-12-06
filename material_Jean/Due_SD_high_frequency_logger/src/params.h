@@ -35,7 +35,7 @@ constexpr uint8_t adc_prescale = 100;
 // parameters for calculating statistics on ADC time series
 
 // how often to report an updated statistics
-constexpr int nbr_of_seconds_per_analysis = 60 * 60;
+constexpr int nbr_of_seconds_per_analysis = 60 * 60;  // i.e. nbr_minutes * seconds_per_minute
 constexpr int nbr_of_samples_per_analysis = nbr_of_seconds_per_analysis * adc_sampling_frequency;
 constexpr int middle_adc_value = (0b1 << (12-1)) -1;
 constexpr float threshold_extrema = 0.20;

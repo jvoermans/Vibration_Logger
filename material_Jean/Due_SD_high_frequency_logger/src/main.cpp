@@ -91,18 +91,20 @@ void loop() {
   // internal update must be called quite often so as to check if some ADC data to log
   fast_logger.internal_update();
 
-  // take care of the GPS and log the GPS output
-  gps_manager.update_status();
-  if (gps_manager.pps_available()){
-    fast_logger.log_cstring(gps_manager.get_pps_message());
-  }
-  if (gps_manager.message_available()){
-    fast_logger.log_cstring(gps_manager.get_message());
-  }
+  if (fast_logger.is_active()){
+    // take care of the GPS and log the GPS output
+    gps_manager.update_status();
+    if (gps_manager.pps_available()){
+      fast_logger.log_cstring(gps_manager.get_pps_message());
+    }
+    if (gps_manager.message_available()){
+      fast_logger.log_cstring(gps_manager.get_message());
+    }
 
-  // take care of the temperature sensors
-  if (temperature_sensors_manager.is_available()){
-    fast_logger.log_cstring(temperature_sensors_manager.get_message());
-    temperature_sensors_manager.start_new_measurement();
+    // take care of the temperature sensors
+    if (temperature_sensors_manager.is_available()){
+      fast_logger.log_cstring(temperature_sensors_manager.get_message());
+      temperature_sensors_manager.start_new_measurement();
+    }
   }
 }
