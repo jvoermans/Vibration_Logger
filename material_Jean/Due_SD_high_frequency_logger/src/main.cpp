@@ -62,6 +62,9 @@ static constexpr bool disable_sd_card = false;
 void setup() {
   delay(10000);
 
+  constexpr unsigned long watchdog_firing_ms = 1000UL;
+  watchdogEnable(watchdog_firing_ms);
+
   if (use_serial_debug){
     Serial.begin(115200);
     delay(100);
@@ -73,10 +76,14 @@ void setup() {
     temperature_sensors_manager.enable_serial_output();
   }
 
+  watchdogReset();
+
   Wire.begin();
   Wire.setClock(i2c_clock_frequency);
   Wire.setTimeout(i2c_timeout_micro_seconds);
   delay(10);
+
+  watchdogReset();
 
   if (disable_sd_card){
     fast_logger.disable_SD();
@@ -87,11 +94,17 @@ void setup() {
   temperature_sensors_manager.start_sensors();
 
   fast_logger.log_cstring("Start!");
+
+  watchdogReset();
 }
 
 void loop() {
+  watchdogReset();
+
   // internal update must be called quite often so as to check if some ADC data to log
   fast_logger.internal_update();
+
+  watchdogReset();
 
   if (fast_logger.is_active()){
     // take care of the GPS and log the GPS output

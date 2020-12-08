@@ -4,7 +4,7 @@
 #include <Wire.h>
 #include "params.h"
 
-constexpr size_t length_tmp_msg_buffer = 5 + 6 * nbr_temp_sensors + 1;
+constexpr size_t length_tmp_msg_buffer = 5 + 10 * nbr_temp_sensors + 1;
 
 constexpr byte TCAADDR = 0x70;
 
@@ -32,10 +32,9 @@ class TemperatureSensorsManager{
         char * get_message(void);
     
     private:
-        bool serial_output {false};
-
-        char buffer_message[length_tmp_msg_buffer]; // length should depend on number of sensors
         unsigned long time_start_measurement_micros = (1 << 31);
+        bool serial_output {false};
+        char buffer_message[length_tmp_msg_buffer]; // length should depend on number of sensors
         uint16_t calibration_data[nbr_temp_sensors][8];
 
         void set_multiplexer_channel(uint8_t channel_nbr);

@@ -215,16 +215,19 @@ bool FastLogger::start_recording()
     SdSpiConfig sd_config{SD_CS_PIN, DEDICATED_SPI, SD_SCK_MHZ(25)};
 
     if (sd_is_active){
-        if (!sd_object.begin(sd_config))
+        while (!sd_object.begin(sd_config))
         {
             sd_object.initErrorHalt(&Serial);
+            delay(100);  // enough to force re-start
         }
     }
 
     delay(5);
 
     // create a new file
-    open_new_file();
+    while (!open_new_file()){
+        delay(100);
+    }
 
     // set the timer and ADC
     setup_adc_buffer_metadata();
@@ -362,7 +365,9 @@ void FastLogger::internal_update(){
         if (need_new_file())
         {
             close_crrt_file();
-            open_new_file();
+            while (!open_new_file()){
+                delay(100);
+            }
         }
     }
 }

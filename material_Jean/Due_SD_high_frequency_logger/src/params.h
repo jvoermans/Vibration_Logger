@@ -11,7 +11,7 @@
 // some I2C properties
 
 // avoid locking the MCU by putting some timeout
-constexpr unsigned long i2c_timeout_micro_seconds = 1000UL;
+constexpr unsigned long i2c_timeout_micro_seconds = 100UL;
 constexpr unsigned long i2c_clock_frequency = 50000UL;  // I think the default is 100000UL; may need to test by hand which values work
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -93,6 +93,6 @@ constexpr int nbr_temp_sensors = 4;
 // needs to be slow enough that the conversion is finished
 // the datasheet says that it can take up to 10ms, so saying 100ms to have quite a bit of margin
 // using a larger value will further reduce the frequency of temperature measurements
-constexpr unsigned long duration_reading_micros = 100000;
+constexpr unsigned long duration_reading_micros = 100000UL;
 
 #endif // !PARAMS_HFLOGGER
