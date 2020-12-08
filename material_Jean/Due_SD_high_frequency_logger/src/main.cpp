@@ -74,6 +74,8 @@ void setup() {
   }
 
   Wire.begin();
+  Wire.setClock(i2c_clock_frequency);
+  Wire.setTimeout(i2c_timeout_micro_seconds);
   delay(10);
 
   if (disable_sd_card){
