@@ -348,10 +348,13 @@ void FastLogger::internal_update(){
 
                 nbr_chars_written = write_statistics(&timeseries_buffer_stats_dump[7], crrt_stats);
 
-                timeseries_buffer_stats_dump[7 + nbr_chars_written] = ';';
                 timeseries_buffer_stats_dump[7 + nbr_chars_written + 1] = '\0';
 
                 log_cstring(timeseries_buffer_stats_dump);
+
+                if (serial_debug_output_is_active){
+                    Serial.println(timeseries_buffer_stats_dump);
+                }
             }
         }
 

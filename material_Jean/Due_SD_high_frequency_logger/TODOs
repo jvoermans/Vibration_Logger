@@ -1,0 +1,3 @@
+- extract classes from the FastLogger.cpp
+- add compilation flags to the platformio.ini
+- add switch to put on / off
