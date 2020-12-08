@@ -5,6 +5,8 @@ from operator import itemgetter
 
 import numpy as np
 
+import math
+
 import pynmea2
 
 import datetime
@@ -31,6 +33,35 @@ class DataEntry():
         self.start = start
         self.end = end
         self.data = data
+
+
+class ChannelStats():
+    def __init__(self, channel, mean_x, mean_x2, min_val, max_val, count_extrema):
+        self.channel = channel
+        self.mean_x = mean_x
+        self.mean_x2 = mean_x2
+        self.min_val = min_val
+        self.max_val = max_val
+        self.count_extrema = count_extrema
+        try:
+            self.std = math.sqrt(self.mean_x2 - self.mean_x**2)
+        except ValueError as e:
+            print("exception {} happened".format(e))
+            print("this is because due to rounding errors on the MCU, mean(x^2) slightly less than mean(x)^2")
+            print("this can be safely ignored; there was simply very little variation in this signal")
+            self.std = 0.0
+
+    def __repr__(self):
+        return("< chnl {}: mean {} | mean of sqr {} | min {} | max {} | nbr extremal {} | std {} >".format(
+            self.channel,
+            self.mean_x,
+            self.mean_x2,
+            self.min_val,
+            self.max_val,
+            self.count_extrema,
+            self.std
+        )
+               )
 
 
 class BinaryFileParser():
@@ -548,3 +579,30 @@ def temperatures_extractor(dict_data):
             list_temperatures_readings.append(crrt_list_temperatures)
 
     return (list_temperatures_timestamps, list_temperatures_readings)
+
+def channel_stats_extractor(dict_data):
+    list_CHR_messages = dict_data["CHR"]["messages"]
+    list_CHR_timestamps = dict_data["CHR"]["timestamps"]
+
+    list_stats_timestamps = []
+    list_stats_readings = []
+
+    for (crrt_timestamp, crrt_message) in zip(list_CHR_timestamps, list_CHR_messages):
+        if crrt_message[0:4] == "STAT":
+            crrt_chnl = int(crrt_message[4:6])
+
+            list_field_chars = crrt_message[7:].split(",")
+
+            crrt_stat = ChannelStats(
+                channel = crrt_chnl,
+                mean_x = float(list_field_chars[0]),
+                mean_x2 = float(list_field_chars[1]),
+                min_val = float(list_field_chars[3]),
+                max_val = float(list_field_chars[2]),
+                count_extrema = float(list_field_chars[4])
+            )
+
+            list_stats_timestamps.append(crrt_timestamp)
+            list_stats_readings.append(crrt_stat)
+
+    return (list_stats_timestamps, list_stats_readings)

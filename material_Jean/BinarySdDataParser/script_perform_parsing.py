@@ -9,7 +9,7 @@ import pickle
 from pprint import PrettyPrinter
 
 from BinaryParser import SlidingParser
-from BinaryParser import GPRMC_extractor, temperatures_extractor
+from BinaryParser import GPRMC_extractor, temperatures_extractor, channel_stats_extractor
 
 import matplotlib.pyplot as plt
 
@@ -28,7 +28,8 @@ def dump_keys(d, lvl=0):
                 dump_keys(v, lvl+1)
 
 # path to the data to parse
-path_to_folder_data = Path("./all_example_data/example_data_geophone_temperature/")
+# path_to_folder_data = Path("./all_example_data/example_data_geophone_temperature/")
+path_to_folder_data = Path("./all_example_data/example_with_channel_stats")
 
 # this will parse all files, and dump the parsed information in pkl files
 SlidingParser(path_to_folder_data)
@@ -41,7 +42,7 @@ with open(str(path_to_folder_data.joinpath("sliding_metadata.pkl")), "br") as fh
 pp(dict_metadata)
 
 # - the data corresponding to each file:
-with open(str(path_to_folder_data.joinpath("F00000049.pkl")), "br") as fh:
+with open(str(path_to_folder_data.joinpath("F00000002.pkl")), "br") as fh:
     dict_data_example = pickle.load(fh)
 
 # the keys of any data file should be self explanatory
@@ -70,6 +71,7 @@ parsed_gprmc = GPRMC_extractor(dict_data_example)
 # for example these are the 2 first parsed GPRMC messages
 print()
 print(parsed_gprmc[0:2])
+
 # at this stage, the usual interface to the parsed pynmea sentences will apply
 
 temperature_reading_timestamps, temperature_reading_values = temperatures_extractor(dict_data_example)
@@ -77,3 +79,10 @@ temperature_reading_timestamps, temperature_reading_values = temperatures_extrac
 for ind in range(20):
     print("{} : {}".format(temperature_reading_timestamps[ind],
                            temperature_reading_values[ind]))
+
+channel_stats_timestamps, channel_stats_values = channel_stats_extractor(dict_data_example)
+
+print()
+for ind in range(6):
+    print("{} : {}".format(channel_stats_timestamps[ind],
+                           channel_stats_values[ind]))

@@ -174,19 +174,19 @@ int write_statistics(char * buffer, TimeSeriesStatistics const & to_dump){
     char crrt_writeout[12];
     int crrt_buffer_pos_to_write = 0;
 
-    sprintf(crrt_writeout, "%.2E,", to_dump.mean);
+    sprintf(crrt_writeout, "%.3E,", to_dump.mean);
     append_buffer(buffer, crrt_writeout, crrt_buffer_pos_to_write);
 
-    sprintf(crrt_writeout, "%.2E,", to_dump.mean_of_square);
+    sprintf(crrt_writeout, "%.3E,", to_dump.mean_of_square);
     append_buffer(buffer, crrt_writeout, crrt_buffer_pos_to_write);
 
-    sprintf(crrt_writeout, "%.2E,", to_dump.max);
+    sprintf(crrt_writeout, "%.3E,", to_dump.max);
     append_buffer(buffer, crrt_writeout, crrt_buffer_pos_to_write);
 
-    sprintf(crrt_writeout, "%.2E,", to_dump.min);
+    sprintf(crrt_writeout, "%.3E,", to_dump.min);
     append_buffer(buffer, crrt_writeout, crrt_buffer_pos_to_write);
 
-    sprintf(crrt_writeout, "%.2E;", static_cast<double>(to_dump.extremal_count));
+    sprintf(crrt_writeout, "%.3E", static_cast<double>(to_dump.extremal_count));
     append_buffer(buffer, crrt_writeout, crrt_buffer_pos_to_write);
 
     return crrt_buffer_pos_to_write;
