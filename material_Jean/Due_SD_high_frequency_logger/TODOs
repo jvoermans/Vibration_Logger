@@ -1,5 +1,5 @@
 - extract classes from the FastLogger.cpp
 - add compilation flags to the platformio.ini
 - add switch to put on / off
-- check all uses of printf, sprintf et co: risk to write at some strange places...
-- use snprintf instead
+- check all uses of printf, sprintf et co: risk to write at some strange places... replace by snprintf
+- I2C logics: make resistant to sensor dying
