@@ -74,7 +74,7 @@ struct TimeSeriesStatistics{
 // TODO: read about ISRs, classes, etc
 // TODO: ask for explanation why did not work in SO issue
 
-constexpr int nbr_blocks_per_adc_channel = 8;
+constexpr int nbr_blocks_per_adc_channel = 16;
 
 constexpr int nbr_adc_measurements_per_block = 250;
 
