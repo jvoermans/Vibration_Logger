@@ -78,7 +78,7 @@ constexpr int nbr_blocks_per_adc_channel = 16;
 
 constexpr int nbr_adc_measurements_per_block = 250;
 
-extern volatile bool blocks_to_write[nbr_of_adc_channels];
+extern volatile bool blocks_to_write[nbr_blocks_per_adc_channel];
 
 extern volatile int crrt_adc_block_index_to_write;
 extern volatile int crrt_adc_data_index_to_write;

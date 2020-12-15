@@ -3,3 +3,5 @@
 - add switch to put on / off
 - check all uses of printf, sprintf et co: risk to write at some strange places... replace by snprintf
 - I2C logics: make resistant to sensor dying
+- if cannot write to file too many times in a row, reset
+- refactor / go again through the whole code

@@ -3,7 +3,7 @@
 ////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////
 
-volatile bool blocks_to_write[nbr_of_adc_channels] = {false};
+volatile bool blocks_to_write[nbr_blocks_per_adc_channel] = {false};
 
 volatile int crrt_adc_block_index_to_write = 0;
 volatile int crrt_adc_data_index_to_write = 0;
