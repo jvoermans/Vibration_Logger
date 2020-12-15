@@ -29,7 +29,8 @@ def dump_keys(d, lvl=0):
 
 # path to the data to parse
 # path_to_folder_data = Path("./all_example_data/example_data_geophone_temperature/")
-path_to_folder_data = Path("./all_example_data/example_with_channel_stats")
+# path_to_folder_data = Path("./all_example_data/example_with_channel_stats")
+path_to_folder_data = Path("./all_example_data/example_JR_fix_nbr_blocks_bug")
 
 # this will parse all files, and dump the parsed information in pkl files
 SlidingParser(path_to_folder_data)
@@ -42,7 +43,7 @@ with open(str(path_to_folder_data.joinpath("sliding_metadata.pkl")), "br") as fh
 pp(dict_metadata)
 
 # - the data corresponding to each file:
-with open(str(path_to_folder_data.joinpath("F00000002.pkl")), "br") as fh:
+with open(str(path_to_folder_data.joinpath("F00000014.pkl")), "br") as fh:
     dict_data_example = pickle.load(fh)
 
 # the keys of any data file should be self explanatory
