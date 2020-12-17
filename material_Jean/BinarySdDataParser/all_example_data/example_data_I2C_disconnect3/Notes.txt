@@ -1,0 +1,2 @@
+Files 1-3 are without disconnecting the VCC of 1 temperature probe (parser works)
+FIles 6 and/or 7 is with disconnecting the VCC (parser gives error)
