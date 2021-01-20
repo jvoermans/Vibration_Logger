@@ -5,15 +5,23 @@
 [submodule "material_Jean/Due_SD_high_frequency_logger/lib/DueFlashStorage"]
 	path = material_Jean/Due_SD_high_frequency_logger/lib/DueFlashStorage
 	url = git@github.com:sebnil/DueFlashStorage.git
+
 [submodule "material_Jean/Due_SD_high_frequency_logger/lib/SdFat-beta"]
 	path = material_Jean/Due_SD_high_frequency_logger/lib/SdFat-beta
 	url = git@github.com:greiman/SdFat-beta.git
+
 [submodule "material_Jean/SdInfo/lib/SdFat-beta"]
 	path = material_Jean/SdInfo/lib/SdFat-beta
 	url = git@github.com:greiman/SdFat-beta.git
+
 [submodule "material_Jean/ExFatFormatter/lib/SdFat-beta"]
 	path = material_Jean/ExFatFormatter/lib/SdFat-beta
 	url = git@github.com:greiman/SdFat-beta.git
+
 [submodule "material_Jean/Due_SD_high_frequency_logger/lib/Adafruit_GPS"]
 	path = material_Jean/Due_SD_high_frequency_logger/lib/Adafruit_GPS
 	url = git@github.com:adafruit/Adafruit_GPS.git
+
+[submodule "material_Jean/Due_SD_high_frequency_logger/lib/ping-arduino"]
+  path = material_Jean/Due_SD_high_frequency_logger/lib/ping-arduino
+  url = git@github.com:bluerobotics/ping-arduino.git

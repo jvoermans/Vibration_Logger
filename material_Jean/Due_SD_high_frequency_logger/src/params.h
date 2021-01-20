@@ -95,4 +95,9 @@ constexpr int nbr_temp_sensors = 4;
 // using a larger value will further reduce the frequency of temperature measurements
 constexpr unsigned long duration_reading_micros = 100000UL;
 
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+// parameters related to the sonar
+constexpr HardwareSerial * selected_sonar_serial = &Serial2;
+
 #endif // !PARAMS_HFLOGGER
