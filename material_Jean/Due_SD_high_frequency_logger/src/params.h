@@ -99,5 +99,6 @@ constexpr unsigned long duration_reading_micros = 100000UL;
 //////////////////////////////////////////////////////////////////////////////////////////
 // parameters related to the sonar
 constexpr HardwareSerial * selected_sonar_serial = &Serial2;
+constexpr unsigned long sample_period_sonar_ms = 1000UL;
 
 #endif // !PARAMS_HFLOGGER
