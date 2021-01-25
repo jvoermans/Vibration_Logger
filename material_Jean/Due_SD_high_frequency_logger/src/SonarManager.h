@@ -20,6 +20,8 @@ class SonarManager{
         FastLogger * fast_logger;
         bool use_serial_debug {false};
         bool working_sonar {false};
+        static constexpr size_t size_buffer_status_message = 32;
+        char buffer_status_messages[size_buffer_status_message];
 };
 
 

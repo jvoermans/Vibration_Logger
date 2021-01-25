@@ -75,6 +75,7 @@ char * TemperatureSensorsManager::get_message(void){
         }
 
         // loop over channels
+        // TODO: log each temperature sensor as a cstring separately
         for (size_t crrt_channel = 0; crrt_channel < nbr_temp_sensors; crrt_channel++){
             // get reading
             uint32_t crrt_reading = get_i2c_tmp_sensor_reading(crrt_channel);
@@ -83,8 +84,10 @@ char * TemperatureSensorsManager::get_message(void){
             float crrt_temperature = convert_i2c_tmp_reading_to_degrees_celcius(crrt_reading, crrt_channel);
 
             // add to message
+            // TODO: what if negative?...
             size_t position_start_message = 4 + (2 + 1 + 2 + 1) * crrt_channel;
             sprintf(&(buffer_message[position_start_message]), "%05.2f,", crrt_temperature);
+            buffer_message[4 + (2 + 1 + 2 + 1) * (crrt_channel + 1)] = '\0';
         }
     }
 

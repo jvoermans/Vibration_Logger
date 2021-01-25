@@ -1,3 +1,7 @@
+- check all arrays for overflows
+- check all printf
+- simplify message logging logics: log part after part using several log_cstring commands (?)
+
 - extract classes from the FastLogger.cpp
 - add compilation flags to the platformio.ini
 - add switch to put on / off
