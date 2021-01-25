@@ -7,6 +7,7 @@
 // TODO: the temperature stuff buffer length and writing if a big mess: FIXME!!!
 // a solution: log each temperature sensor as a cstring separately
 constexpr size_t length_tmp_msg_buffer = 5 + 10 * nbr_temp_sensors + 1;
+constexpr size_t extra_length_tmp_msg_buffer = length_tmp_msg_buffer + 100;
 
 constexpr byte TCAADDR = 0x70;
 
@@ -36,7 +37,7 @@ class TemperatureSensorsManager{
     private:
         unsigned long time_start_measurement_micros = (1 << 31);
         bool serial_output {false};
-        char buffer_message[length_tmp_msg_buffer + 100]; // length should depend on number of sensors; add some extra to avoid bad overflows (bad way to do...)
+        char buffer_message[extra_length_tmp_msg_buffer]; // length should depend on number of sensors; add some extra to avoid bad overflows (bad way to do...)
         uint16_t calibration_data[nbr_temp_sensors][8];
 
         void set_multiplexer_channel(uint8_t channel_nbr);

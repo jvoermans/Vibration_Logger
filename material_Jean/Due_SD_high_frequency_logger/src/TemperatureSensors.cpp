@@ -11,6 +11,10 @@ void TemperatureSensorsManager::start_sensors(void){
         Serial.println(F("Start temperature sensors"));
     }
 
+    for (size_t i=0; i<extra_length_tmp_msg_buffer; i++){
+        buffer_message[i] = '\0';
+    }
+
     // reset all temperature sensors
     for (size_t i = 0; i < nbr_temp_sensors; i++){
         send_i2c_command_start_tmp_sensor(i);

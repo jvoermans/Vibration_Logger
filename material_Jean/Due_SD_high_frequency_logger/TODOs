@@ -1,6 +1,8 @@
 - check all arrays for overflows
 - check all printf
 - simplify message logging logics: log part after part using several log_cstring commands (?)
+- pre initialize all buffers with '\0'
+- check all null bytes are well with backslash \ and not slash /
 
 - extract classes from the FastLogger.cpp
 - add compilation flags to the platformio.ini
