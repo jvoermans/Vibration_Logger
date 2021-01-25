@@ -40,7 +40,7 @@ class GPSManager{
         bool use_serial_debug_output = false;
         static constexpr int size_message_buffer = 256;
         char message_buffer[size_message_buffer];
-        static constexpr int size_pps_message_buffer = 3 + 1 + 10 + 2;
+        static constexpr int size_pps_message_buffer = 3 + 1 + 10 + 2 + 16;
         char pps_message_buffer[size_pps_message_buffer];
         bool message_is_available = false;
         size_t buffer_tail;

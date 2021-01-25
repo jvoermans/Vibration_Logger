@@ -115,21 +115,42 @@ void loop() {
     // take care of the GPS and log the GPS output
     gps_manager.update_status();
     if (gps_manager.pps_available()){
+      if (use_serial_debug){
+        Serial.println(F("PPS updt"));
+      }
       fast_logger.log_cstring(gps_manager.get_pps_message());
     }
+
+    fast_logger.internal_update();
+
     if (gps_manager.message_available()){
+      if (use_serial_debug){
+        Serial.println(F("GPS updt"));
+      }
       fast_logger.log_cstring(gps_manager.get_message());
     }
 
+    fast_logger.internal_update();
+
     // take care of the temperature sensors
     if (temperature_sensors_manager.is_available()){
+      if (use_serial_debug){
+        Serial.println(F("TMP updt"));
+      }
       fast_logger.log_cstring(temperature_sensors_manager.get_message());
       temperature_sensors_manager.start_new_measurement();
     }
 
+    fast_logger.internal_update();
+
     // take care of the sonar
     if (sonar_manager.ready_to_measure()){
+      if (use_serial_debug){
+        Serial.println(F("SNR updt"));
+      }
       sonar_manager.measure_and_log();
     }
+
+    fast_logger.internal_update();
   }
 }

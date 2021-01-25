@@ -57,6 +57,11 @@ void SonarManager::measure_and_log(void){
         time_last_measurement_ms = millis();
 
         if (sonar_ping.request(Ping1DNamespace::Profile)) {
+            if (use_serial_debug){
+                Serial.print(F("nbr of profile points: "));
+                Serial.println(sonar_ping.profile_data_length());
+            }
+
             for (int i = 0; i < sonar_ping.profile_data_length(); i++) {
                 uint8_t crrt_ping = sonar_ping.profile_data()[i];
                 fast_logger->log_char(static_cast<char>(crrt_ping));
