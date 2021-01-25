@@ -21,6 +21,9 @@ void SonarManager::start_sonar(FastLogger * fast_logger, bool use_serial_debug){
       }
       else{
           working_sonar = true;
+          if (use_serial_debug){
+              Serial.println(F("sonar started"));
+          }
           break;
       }
   }

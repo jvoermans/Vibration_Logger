@@ -72,6 +72,7 @@ void setup() {
   if (use_serial_debug){
     Serial.begin(115200);
     delay(100);
+    Serial.println();
   }
 
   if (use_serial_debug){
