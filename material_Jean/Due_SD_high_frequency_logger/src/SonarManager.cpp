@@ -30,6 +30,10 @@ void SonarManager::start_sonar(FastLogger * fast_logger, bool use_serial_debug){
 
   // make time ready to measureSerial.printlnSerial.printlnSerial.println
   time_last_measurement_ms = millis() - sample_period_sonar_ms - 1;
+
+  if (use_serial_debug){
+      Serial.println(F("sonar initialized"));
+  }
 }
 
 bool SonarManager::ready_to_measure(void){
