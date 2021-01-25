@@ -144,14 +144,14 @@ void loop() {
 
     fast_logger.internal_update();
 
-    // take care of the sonar
-    if (sonar_manager.ready_to_measure()){
-      if (use_serial_debug){
-        Serial.println(F("SNR updt"));
-      }
-      sonar_manager.measure_and_log();
-    }
+    // // take care of the sonar
+    // if (sonar_manager.ready_to_measure()){
+    //   if (use_serial_debug){
+    //     Serial.println(F("SNR updt"));
+    //   }
+    //   sonar_manager.measure_and_log();
+    // }
 
-    fast_logger.internal_update();
+    // fast_logger.internal_update();
   }
 }
