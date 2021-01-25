@@ -39,8 +39,6 @@ void TemperatureSensorsManager::start_sensors(void){
     buffer_message[2] = 'P';
     buffer_message[3] = ',';
 
-    buffer_message[length_tmp_msg_buffer - 1] = '\0';
-
     // set the reference time for start of measurements and start first measurement
     time_start_measurement_micros = micros() - duration_reading_micros - 1;
     start_new_measurement();
@@ -79,7 +77,6 @@ char * TemperatureSensorsManager::get_message(void){
         }
 
         // loop over channels
-        // TODO: log each temperature sensor as a cstring separately
         for (size_t crrt_channel = 0; crrt_channel < nbr_temp_sensors; crrt_channel++){
             // get reading
             uint32_t crrt_reading = get_i2c_tmp_sensor_reading(crrt_channel);
@@ -88,14 +85,11 @@ char * TemperatureSensorsManager::get_message(void){
             float crrt_temperature = convert_i2c_tmp_reading_to_degrees_celcius(crrt_reading, crrt_channel);
 
             // add to message
-            // TODO: what if negative?...
-            size_t position_start_message = 4 + (2 + 1 + 2 + 1) * crrt_channel;
-            sprintf(&(buffer_message[position_start_message]), "%05.2f,", crrt_temperature);
-            buffer_message[4 + (2 + 1 + 2 + 1) * (crrt_channel + 1)] = '\0';
+            size_t position_start_message = 4 + (6 + 1) * crrt_channel;
+            sprintf(&(buffer_message[position_start_message]), "%+06.2f,", crrt_temperature);
+            buffer_message[4 + (6 + 1) * (crrt_channel + 1)] = '\0';
         }
     }
-
-    buffer_message[length_tmp_msg_buffer - 2] = '\0';
 
     if (serial_output){
         Serial.println(buffer_message);
@@ -177,6 +171,14 @@ float TemperatureSensorsManager::convert_i2c_tmp_reading_to_degrees_celcius(uint
                 (-2) * static_cast<float>(calibration_data[tmp_sensor_nbr][3]) / 100000000000.0f * pow(adc_16, 2) +
                 1 * static_cast<float>(calibration_data[tmp_sensor_nbr][4]) / 1000000.0f * adc_16 +
                 (-1.5) * static_cast<float>(calibration_data[tmp_sensor_nbr][5]) / 100 ;
+    
+    if (tmp_value > 99.0){
+        tmp_value = 99.0;
+    }
+
+    if (tmp_value < -99.0){
+        tmp_value = -99.0;
+    }
 
     return tmp_value;
 }
