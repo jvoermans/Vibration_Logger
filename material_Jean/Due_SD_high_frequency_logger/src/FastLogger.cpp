@@ -11,7 +11,7 @@ volatile int crrt_adc_data_index_to_write = 0;
 volatile BlockADCWithMetadata blocks_adc_with_metdata[nbr_of_adc_channels][nbr_blocks_per_adc_channel];
 
 TimeSeriesAnalyzer analyzers_adc_channels[nbr_of_adc_channels];
-char timeseries_buffer_stats_dump[120];
+char timeseries_buffer_stats_dump[256];
 
 void setup_adc_buffer_metadata()
 {
@@ -171,7 +171,10 @@ void append_buffer(char * main_buffer, char * to_add_buffer, int & pos_in_main_b
 }
 
 int write_statistics(char * buffer, TimeSeriesStatistics const & to_dump){
-    char crrt_writeout[12];
+    char crrt_writeout[64];
+    for (size_t i=0; i<64; i++){
+        crrt_writeout[i] = '\0';
+    }
     int crrt_buffer_pos_to_write = 0;
 
     sprintf(crrt_writeout, "%.3E,", to_dump.mean);
@@ -335,12 +338,19 @@ void FastLogger::internal_update(){
                 // post the current stats
                 TimeSeriesStatistics const & crrt_stats = analyzers_adc_channels[crrt_channel].get_stats();
 
+                for (size_t i=0; i<256; i++){
+                    timeseries_buffer_stats_dump[i] = '\0';
+                }
+
                 // packet information
                 timeseries_buffer_stats_dump[0] = 'S';
                 timeseries_buffer_stats_dump[1] = 'T';
                 timeseries_buffer_stats_dump[2] = 'A';
                 timeseries_buffer_stats_dump[3] = 'T';
-                char crrt_chnl[3];
+                char crrt_chnl[32];
+                for (size_t i=0; i<32; i++){
+                    crrt_chnl[i] = '\0';
+                }
                 sprintf(crrt_chnl, "%02i", crrt_channel);
                 timeseries_buffer_stats_dump[4] = crrt_chnl[0];
                 timeseries_buffer_stats_dump[5] = crrt_chnl[1];
