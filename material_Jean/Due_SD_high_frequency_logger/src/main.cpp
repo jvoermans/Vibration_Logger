@@ -154,6 +154,8 @@ void loop() {
     if (sonar_manager.ready_to_measure()){
       if (use_serial_debug){
         Serial.println(F("SNR updt"));
+        // TODO: remove
+        Serial.flush();
       }
       sonar_manager.measure_and_log();
     }
