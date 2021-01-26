@@ -335,6 +335,10 @@ void FastLogger::internal_update(){
         // check if some stats data to write
         for (size_t crrt_channel = 0; crrt_channel < nbr_of_adc_channels; crrt_channel++){
             if (analyzers_adc_channels[crrt_channel].stats_are_available()){
+                if (serial_debug_output_is_active){
+                    Serial.println(F("stats avail"));
+                }
+
                 // post the current stats
                 TimeSeriesStatistics const & crrt_stats = analyzers_adc_channels[crrt_channel].get_stats();
 
