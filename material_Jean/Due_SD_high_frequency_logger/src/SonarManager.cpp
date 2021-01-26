@@ -48,6 +48,10 @@ bool SonarManager::ready_to_measure(void){
 void SonarManager::measure_and_log(void){
     time_last_measurement_ms = millis();
 
+    if (use_serial_debug){
+        Serial.println(F("millis"));
+    }
+
     if (working_sonar){
 
         if (use_serial_debug){
