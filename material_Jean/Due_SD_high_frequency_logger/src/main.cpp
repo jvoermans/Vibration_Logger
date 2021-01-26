@@ -113,6 +113,24 @@ void loop() {
   watchdogReset();
 
   if (fast_logger.is_active()){
+
+    // take care of the sonar
+
+    // TODO: remove me: this is for debugging only
+    if (use_serial_debug){
+      Serial.flush();
+    }
+
+    if (sonar_manager.ready_to_measure()){
+      if (use_serial_debug){
+        Serial.println(F("SNR updt"));
+        // TODO: remove
+        Serial.flush();
+      }
+      sonar_manager.measure_and_log();
+    }
+
+    fast_logger.internal_update();
     // take care of the GPS and log the GPS output
     gps_manager.update_status();
     if (gps_manager.pps_available()){
@@ -140,24 +158,6 @@ void loop() {
       }
       fast_logger.log_cstring(temperature_sensors_manager.get_message());
       temperature_sensors_manager.start_new_measurement();
-    }
-
-    fast_logger.internal_update();
-
-    // take care of the sonar
-
-    // TODO: remove me: this is for debugging only
-    if (use_serial_debug){
-      Serial.flush();
-    }
-
-    if (sonar_manager.ready_to_measure()){
-      if (use_serial_debug){
-        Serial.println(F("SNR updt"));
-        // TODO: remove
-        Serial.flush();
-      }
-      sonar_manager.measure_and_log();
     }
 
     fast_logger.internal_update();

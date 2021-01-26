@@ -12,7 +12,7 @@
 
 // avoid locking the MCU by putting some timeout
 constexpr unsigned long i2c_timeout_micro_seconds = 100UL;
-constexpr unsigned long i2c_clock_frequency = 50000UL;  // I think the default is 100000UL; may need to test by hand which values work
+constexpr unsigned long i2c_clock_frequency = 100000UL;  // I think the default is 100000UL; may need to test by hand which values work
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////
