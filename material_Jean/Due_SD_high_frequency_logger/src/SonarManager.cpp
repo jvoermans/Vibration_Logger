@@ -143,13 +143,13 @@ void SonarManager::measure_and_log(void){
 
             fast_logger->log_cstring(buffer_status_messages);
 
-            } else {
-                if (use_serial_debug){
-                    Serial.println(F("get sonar data fail"));
-                    // TODO: remove
-                    Serial.flush();
-                }
+        } else {
+            if (use_serial_debug){
+                Serial.println(F("get sonar data fail"));
+                // TODO: remove
+                Serial.flush();
             }
+        }
     }
     else{
         if (use_serial_debug){
