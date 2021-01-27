@@ -22,8 +22,8 @@ void setup_adc_buffer_metadata()
 
         for (size_t crrt_adc_block_index = 0; crrt_adc_block_index < nbr_blocks_per_adc_channel; crrt_adc_block_index++)
         {
-            blocks_adc_with_metdata[crrt_adc_channel_index][crrt_adc_block_index].metadata.metadata_id = static_cast<uint8_t>('A');
-            blocks_adc_with_metdata[crrt_adc_channel_index][crrt_adc_block_index].metadata.block_number = static_cast<uint8_t>(crrt_adc_channel_index);
+            blocks_adc_with_metdata[crrt_adc_channel_index][crrt_adc_block_index].metadata.metadata_id = static_cast<uint16_t>('A');
+            blocks_adc_with_metdata[crrt_adc_channel_index][crrt_adc_block_index].metadata.block_number = static_cast<uint16_t>(crrt_adc_channel_index);
         }
     }
 }
@@ -171,8 +171,8 @@ void append_buffer(char * main_buffer, char * to_add_buffer, int & pos_in_main_b
 }
 
 int write_statistics(char * buffer, TimeSeriesStatistics const & to_dump){
-    char crrt_writeout[64];
-    for (size_t i=0; i<64; i++){
+    char crrt_writeout[128];
+    for (size_t i=0; i<128; i++){
         crrt_writeout[i] = '\0';
     }
     int crrt_buffer_pos_to_write = 0;
@@ -286,6 +286,9 @@ void FastLogger::log_cstring(const char *cstring)
     log_char('M');
 
     char micros_timestamp[32];
+    for (size_t i=0; i<32; i++){
+        micros_timestamp[i] = '\0';
+    }
     sprintf(micros_timestamp, "%09lu", crrt_micros);
     for (int i = 0; i < 9; i++)
     {
@@ -298,6 +301,11 @@ void FastLogger::log_cstring(const char *cstring)
     size_t i = 0;
     while (cstring[i] != '\0')
     {
+        // put a max length to the string, in case the string in is not 0 terminated
+        if (i > 1024){
+            break;
+        }
+
         char crrt_char = cstring[i];
 
         if (crrt_char == ';'){

@@ -41,6 +41,14 @@ void GPSManager::start_gps(void){
     pinMode(pps_pin, INPUT);
     attachInterrupt(digitalPinToInterrupt(pps_pin), ISR_pps, RISING);
 
+    for (size_t i=0; i<size_pps_message_buffer; i++){
+        pps_message_buffer[i] = '\0';
+    }
+
+    for (size_t i=0; i<size_message_buffer; i++){
+        message_buffer[i] = '\0';
+    }
+
     pps_message_buffer[0] = 'P';
     pps_message_buffer[1] = 'P';
     pps_message_buffer[2] = 'S';
@@ -55,7 +63,7 @@ void GPSManager::start_gps(void){
 void GPSManager::update_status(void){
     if (!message_is_available){
         while (serial_gps->available() > 0){
-            if (buffer_tail < size_message_buffer){
+            if (buffer_tail < size_message_buffer-1){
                 char crrt_char = serial_gps->read();
                 message_buffer[buffer_tail] = crrt_char;
                 buffer_tail += 1;
@@ -64,6 +72,17 @@ void GPSManager::update_status(void){
                     message_is_available = true;
                 }
             } 
+            else{
+                if (use_serial_debug_output){
+                    Serial.println(F("full GPS buffer, flush"));
+                }
+                // flush serial input buffer
+                while (serial_gps->available() > 0){
+                    serial_gps->read();
+                }
+                // reset buffer
+                buffer_tail = 0;
+            }
         }
     }
 }
@@ -81,6 +100,7 @@ void GPSManager::enable_serial_debug_output(void){
 }
 
 char * GPSManager::get_message(void){
+    message_buffer[buffer_tail] = '\0';
     buffer_tail = 0;
     message_is_available = false;
     
