@@ -38,6 +38,9 @@ void SonarManager::start_sonar(FastLogger * fast_logger, bool use_serial_debug){
 
 bool SonarManager::ready_to_measure(void){
     if (millis() - time_last_measurement_ms > sample_period_sonar_ms){
+        if (use_serial_debug){
+            Serial.println(F("SNR meas rdy"));
+        }
         return true;
     }
     else{
@@ -69,6 +72,7 @@ void SonarManager::measure_and_log(void){
 
         fast_logger->log_cstring(buffer_status_messages);  // request sonar
 
+        /* this would be the ideal: logging the full sonar profile; however, I somehow cannot get this to work!
         if (sonar_ping.request(Ping1DNamespace::Profile)) {
             if (use_serial_debug){
                 Serial.print(F("nbr sonar points: "));
@@ -81,6 +85,45 @@ void SonarManager::measure_and_log(void){
                 uint8_t crrt_ping = sonar_ping.profile_data()[i];
                 fast_logger->log_char(static_cast<char>(crrt_ping));
             }
+        */
+
+       // */ this is less information; sending only the distance to max hit and confidence
+       int sonar_distance;
+       int sonar_confidence;
+
+        if (sonar_ping.update()) {
+            sonar_distance = sonar_ping.distance();
+            sonar_confidence = sonar_ping.confidence();
+
+            char buffer_sonar_message[64];
+
+            for (size_t i=0; i<64; i++){
+                buffer_sonar_message[i] = '\0';
+            }
+
+            buffer_sonar_message[0] = 'D';
+            buffer_sonar_message[1] = 'S';
+            buffer_sonar_message[2] = 'T';
+            buffer_sonar_message[3] = ':';
+
+            sprintf(&buffer_sonar_message[4], "%+09i,", sonar_distance);
+
+            fast_logger->log_cstring(buffer_sonar_message);
+
+            for (size_t i=0; i<64; i++){
+                buffer_sonar_message[i] = '\0';
+            }
+
+            buffer_sonar_message[0] = 'C';
+            buffer_sonar_message[1] = 'F';
+            buffer_sonar_message[2] = 'D';
+            buffer_sonar_message[3] = ':';
+
+            sprintf(&buffer_sonar_message[4], "%+09i,", sonar_confidence);
+
+            fast_logger->log_cstring(buffer_sonar_message);
+        }
+        // *
 
         buffer_status_messages[0] = 'e';  // msg flag end
         buffer_status_messages[1] = 's';
