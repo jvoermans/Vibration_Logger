@@ -73,6 +73,7 @@ void SonarManager::measure_and_log(void){
         fast_logger->log_cstring(buffer_status_messages);  // request sonar
 
         /* this would be the ideal: logging the full sonar profile; however, I somehow cannot get this to work!
+        // I wonder if there are some problems in the sonar library itself
         if (sonar_ping.request(Ping1DNamespace::Profile)) {
             if (use_serial_debug){
                 Serial.print(F("nbr sonar points: "));
@@ -87,11 +88,12 @@ void SonarManager::measure_and_log(void){
             }
         */
 
-       // */ this is less information; sending only the distance to max hit and confidence
-       int sonar_distance;
-       int sonar_confidence;
 
+        // */ this is less information; sending only the distance to max hit and confidence
         if (sonar_ping.update()) {
+            int sonar_distance;
+            int sonar_confidence;
+
             sonar_distance = sonar_ping.distance();
             sonar_confidence = sonar_ping.confidence();
 
@@ -108,6 +110,10 @@ void SonarManager::measure_and_log(void){
 
             sprintf(&buffer_sonar_message[4], "%+09i,", sonar_distance);
 
+            if (use_serial_debug){
+                Serial.println(buffer_sonar_message);
+            }
+
             fast_logger->log_cstring(buffer_sonar_message);
 
             for (size_t i=0; i<64; i++){
@@ -121,26 +127,29 @@ void SonarManager::measure_and_log(void){
 
             sprintf(&buffer_sonar_message[4], "%+09i,", sonar_confidence);
 
-            fast_logger->log_cstring(buffer_sonar_message);
-        }
-        // *
-
-        buffer_status_messages[0] = 'e';  // msg flag end
-        buffer_status_messages[1] = 's';
-        buffer_status_messages[2] = 'n';
-        buffer_status_messages[3] = 'r';
-        buffer_status_messages[4] = ':';
-        buffer_status_messages[5] = '\0';
-
-        fast_logger->log_cstring(buffer_status_messages);
-
-        } else {
             if (use_serial_debug){
-                Serial.println(F("get sonar profile fail"));
-                // TODO: remove
-                Serial.flush();
+                Serial.println(buffer_sonar_message);
             }
-        }
+
+            fast_logger->log_cstring(buffer_sonar_message);
+            // *
+
+            buffer_status_messages[0] = 'e';  // msg flag end
+            buffer_status_messages[1] = 's';
+            buffer_status_messages[2] = 'n';
+            buffer_status_messages[3] = 'r';
+            buffer_status_messages[4] = ':';
+            buffer_status_messages[5] = '\0';
+
+            fast_logger->log_cstring(buffer_status_messages);
+
+            } else {
+                if (use_serial_debug){
+                    Serial.println(F("get sonar data fail"));
+                    // TODO: remove
+                    Serial.flush();
+                }
+            }
     }
     else{
         if (use_serial_debug){
