@@ -22,3 +22,6 @@
 	path = material_Jean/Due_SD_high_frequency_logger/lib/Adafruit_GPS
 	url = git@github.com:adafruit/Adafruit_GPS.git
 
+[submodule "material_Jean/Due_SD_high_frequency_logger/lib/ping-arduino-jr"]
+	path = material_Jean/Due_SD_high_frequency_logger/lib/ping-arduino-jr
+	url = git@github.com:jerabaul29/ping-arduino.git
