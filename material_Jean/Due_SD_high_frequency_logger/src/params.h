@@ -55,9 +55,9 @@ constexpr int threshold_high = static_cast<int>((1.0 - threshold_extrema) * ((0b
 // parameters related to the SD card and logging file
 
 // the duration of each individual binary file in seconds
-// static constexpr int file_duration_seconds = 15 * 60;
-// constexpr int logger_file_duration_seconds = 15;
-constexpr int logger_file_duration_seconds = 15;
+// static constexpr int file_duration_seconds = 15 * 60;  // 15 minutes
+// constexpr int logger_file_duration_seconds = 15; // 15 seconds
+constexpr int logger_file_duration_seconds = 15 * 60;
 
 // which kind of card format is used
 // this is what works on my 32 GB SD card
