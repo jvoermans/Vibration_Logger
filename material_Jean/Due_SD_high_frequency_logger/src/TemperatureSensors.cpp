@@ -1,7 +1,5 @@
 #include "TemperatureSensors.h"
 
-// TODO: add the serial debug information
-
 void TemperatureSensorsManager::enable_serial_output(bool enable_serial){
     serial_output = enable_serial;
 }

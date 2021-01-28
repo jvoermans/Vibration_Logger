@@ -24,7 +24,6 @@ char * GPSManager::get_pps_message(void){
 }
 
 void GPSManager::start_gps(void){
-    // TODO: init all buffers to \0
 
     adafruit_gps = Adafruit_GPS(serial_gps);
     adafruit_gps.begin(9600);

@@ -50,15 +50,11 @@
 #include <Wire.h>
 #include <TemperatureSensors.h>
 
-#include <SonarManager.h>
-
 FastLogger fast_logger;
 
 GPSManager gps_manager;
 
 TemperatureSensorsManager temperature_sensors_manager;
-
-SonarManager sonar_manager;
 
 static constexpr bool use_serial_debug = true;
 static constexpr bool disable_sd_card = false;
@@ -97,7 +93,6 @@ void setup() {
   fast_logger.start_recording();
   gps_manager.start_gps();
   temperature_sensors_manager.start_sensors();
-  sonar_manager.start_sonar(&fast_logger, use_serial_debug);
 
   fast_logger.log_cstring("Start!");
 
@@ -113,22 +108,6 @@ void loop() {
   watchdogReset();
 
   if (fast_logger.is_active()){
-
-    // take care of the sonar
-
-    // TODO: remove me: this is for debugging only
-    if (use_serial_debug){
-      Serial.flush();
-    }
-
-    if (sonar_manager.ready_to_measure()){
-      if (use_serial_debug){
-        Serial.println(F("SNR updt"));
-        // TODO: remove
-        Serial.flush();
-      }
-      sonar_manager.measure_and_log();
-    }
 
     fast_logger.internal_update();
     // take care of the GPS and log the GPS output

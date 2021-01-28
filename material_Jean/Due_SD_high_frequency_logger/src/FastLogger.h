@@ -71,8 +71,6 @@ struct TimeSeriesStatistics{
 ////////////////////////////////////////////////////////////
 
 // getting the interrupt related stuff into the class is tricky, keep it outside
-// TODO: read about ISRs, classes, etc
-// TODO: ask for explanation why did not work in SO issue
 
 constexpr int nbr_blocks_per_adc_channel = 16;
 

@@ -4,7 +4,6 @@
 #include <Wire.h>
 #include "params.h"
 
-// TODO: the temperature stuff buffer length and writing if a big mess: FIXME!!!
 // a solution: log each temperature sensor as a cstring separately
 constexpr size_t length_tmp_msg_buffer = 5 + 10 * nbr_temp_sensors + 1;
 constexpr size_t extra_length_tmp_msg_buffer = length_tmp_msg_buffer + 100;
@@ -50,8 +49,3 @@ class TemperatureSensorsManager{
 };
 
 #endif // !TEMPERATURE_SENSOR_HEADER
-
-// TODO
-// have it manage all sensors at the same time? ie go through the multiplexer chip
-// make sure no need to wait too long, by checking the time needed through is_available
-// know in advance how many sensors used

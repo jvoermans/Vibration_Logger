@@ -4,7 +4,6 @@
 // all messages are cstrings
 // function message_available, including PPS
 // get pointer to available message
-// TODO: make sure larger buffer on GPS serial receive
 
 // available_message: check PPS, check serial, generate message, return bool
 // get_message: pointer to the cstring message, anc reset
