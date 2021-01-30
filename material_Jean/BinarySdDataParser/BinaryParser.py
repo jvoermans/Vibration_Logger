@@ -295,7 +295,7 @@ class BinaryFolderParser():
         while crrt_chr_entry_index < nbr_chr_entries - 1:
             crrt_entry = list_chr_entries[crrt_chr_entry_index]
 
-            if crrt_entry[0] == 'M' and len(crrt_entry) == 10:
+            if crrt_entry[0] == 'M' and len(crrt_entry) == 11:
                 crrt_chr_entry_index += 1
                 next_entry = list_chr_entries[crrt_chr_entry_index]
 
