@@ -47,14 +47,9 @@
 
 #include <GPS_manager.h>
 
-#include <Wire.h>
-#include <TemperatureSensors.h>
-
 FastLogger fast_logger;
 
 GPSManager gps_manager;
-
-TemperatureSensorsManager temperature_sensors_manager;
 
 static constexpr bool use_serial_debug = true;
 static constexpr bool disable_sd_card = false;
@@ -74,17 +69,10 @@ void setup() {
   if (use_serial_debug){
     fast_logger.enable_serial_debug_output();
     gps_manager.enable_serial_debug_output();
-    temperature_sensors_manager.enable_serial_output();
   }
 
   watchdogReset();
 
-  Wire.begin();
-  Wire.setClock(i2c_clock_frequency);
-  Wire.setTimeout(i2c_timeout_micro_seconds);
-  delay(10);
-
-  watchdogReset();
 
   if (disable_sd_card){
     fast_logger.disable_SD();
@@ -92,7 +80,6 @@ void setup() {
 
   fast_logger.start_recording();
   gps_manager.start_gps();
-  temperature_sensors_manager.start_sensors();
 
   fast_logger.log_cstring("Start!");
 
@@ -104,12 +91,10 @@ void loop() {
 
   // internal update must be called quite often so as to check if some ADC data to log
   fast_logger.internal_update();
-
   watchdogReset();
 
   if (fast_logger.is_active()){
 
-    fast_logger.internal_update();
     // take care of the GPS and log the GPS output
     gps_manager.update_status();
     if (gps_manager.pps_available()){
@@ -129,16 +114,6 @@ void loop() {
     }
 
     fast_logger.internal_update();
-
-    // take care of the temperature sensors
-    if (temperature_sensors_manager.is_available()){
-      if (use_serial_debug){
-        Serial.println(F("TMP updt"));
-      }
-      fast_logger.log_cstring(temperature_sensors_manager.get_message());
-      temperature_sensors_manager.start_new_measurement();
-    }
-
-    fast_logger.internal_update();
+    watchdogReset();
   }
 }
