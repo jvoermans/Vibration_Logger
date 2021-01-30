@@ -289,8 +289,8 @@ void FastLogger::log_cstring(const char *cstring)
     for (size_t i=0; i<32; i++){
         micros_timestamp[i] = '\0';
     }
-    sprintf(micros_timestamp, "%09lu", crrt_micros);
-    for (int i = 0; i < 9; i++)
+    sprintf(micros_timestamp, "%010lu", crrt_micros);
+    for (int i = 0; i < 10; i++)
     {
         log_char(micros_timestamp[i]);
     }
