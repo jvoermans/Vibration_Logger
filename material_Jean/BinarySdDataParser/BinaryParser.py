@@ -1,3 +1,9 @@
+"""
+TODO: there are some minor problems with this parser, but the arduino logger seems to work fine;
+if anything problematic, work on improving this code.
+TODO: put back the CHR parsing
+"""
+
 import struct
 from pathlib import Path
 
@@ -192,32 +198,26 @@ def filename_to_filenumber(filename):
     return filenumber
 
 
-def unwrapp_list_micros(list_micros, max_logging_delta=1000000 * 60 * 15, wrap_value=2**32-1):
+def unwrapp_list_micros(list_micros, wrap_value=2**32-1):
     """Given a list_micros of consecutive micros readings, possibly that have wrapped,
-    unwrapp them.
+    unwrapp them. Use the fact that, given the present setup, at most 1 wrapping per file,
+    and the duration of a file is less than half the wrapping time.
     """
     list_unwrapped_micros = []
 
-    crrt_unwrapping_value = 0
-
-    # at least the first entry is always unwrapped...
-    if len(list_micros) > 0:
-        previous_entry_unwrapped = list_micros[0]
-        list_unwrapped_micros.append(previous_entry_unwrapped)
-
-        for crrt_entry in list_micros[1:]:
-            crrt_entry_unwrapped = crrt_entry + crrt_unwrapping_value
-
-            if crrt_entry_unwrapped < previous_entry_unwrapped:
-                # close enough to a wrapping point: that was true wrapping
-                if (((previous_entry_unwrapped + max_logging_delta) % wrap_value) < (previous_entry_unwrapped % wrap_value)):
-                    crrt_entry_unwrapped += wrap_value
-                    crrt_unwrapping_value += wrap_value
-                else:
-                    raise ValueError("We observe wrapping, but we are far away from the wrapping point!")
-
-            list_unwrapped_micros.append(crrt_entry_unwrapped)
-            previous_entry_unwrapped = crrt_entry_unwrapped
+    min_micros = min(list_micros)
+    max_micros = max(list_micros)
+    
+    some_wrapping = False
+    
+    if ((min_micros < 1000000 * 60) and max_micros > (wrap_value - 1000000 * 60)):
+        some_wrapping = True
+        print("some micro wrapping is taking place")
+        
+    for crrt_micro in list_micros:
+        if ((crrt_micro < wrap_value / 2) and (some_wrapping)):
+            crrt_micro += wrap_value
+        list_unwrapped_micros.append(crrt_micro)
 
     return list_unwrapped_micros
 
@@ -341,8 +341,11 @@ class BinaryFolderParser():
         self.dict_data["PPS_GPRMC_entries"] = list_PPS_GPRMC_entries
 
     def _unwrap_all_micros(self):
+        print("unwrap micros for CHR")
         self.dict_data["CHR_micros_unwrapped"] = unwrapp_list_micros(self.dict_data["CHR_micros"])
+        print("unwrap micros for ADC_0")
         self.dict_data["ADC_micros_unwrapped"] = unwrapp_list_micros(self.dict_data["ADC_0"]["micros"])
+        print("unwrap micros for PPS")
         self.dict_data["PPS_entries_micros_unwrapped"] = unwrapp_list_micros(self.dict_data["PPS_entries_micros"])
 
     def _generate_utc_timestamps_regression(self, show_fit=False):
@@ -464,10 +467,8 @@ class BinaryFolderParser():
 
 
 class SlidingParser():
-    """Perform a 'sliding parsing' of all the files in a folder. This allows to
-    both save memory as only a couple of files are loaded at the same time,
-    but take care that all messages are fully reconstructed. Dump the parsed data
-    in 1 pkl file per binary file."""
+    """Perform a 'sliding parsing' of all the files in a folder. Parse each file one after
+    the other. Dump the parsed data in 1 pkl file per binary file."""
     def __init__(self, folder):
         self.folder = folder
         ras(isinstance(self.folder, Path))
@@ -477,33 +478,21 @@ class SlidingParser():
         self.dict_metadata["ADC"] = {}
         self.dict_metadata["CHR"] = {}
 
-        # when parsing, always dump until the end of the ADC data, and until
-        # the end of the previous last CHR data
-
-        time_start_CHR = datetime.datetime(1970, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
-        time_start_ADC = datetime.datetime(1970, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
-
-        # parse the first file alone
-        time_start_CHR, time_start_ADC = self._process_entries([self.list_files[0]], time_start_CHR, time_start_ADC)
-
-        # from now on, parse all files in pairs
-        for crrt_ind_start in tqdm(range(len(self.list_files) - 1)):
-            crrt_pair_files = [self.list_files[crrt_ind_start], self.list_files[crrt_ind_start + 1]]
-            time_start_CHR, time_start_ADC = self._process_entries(crrt_pair_files, time_start_CHR, time_start_ADC)
+        # parse all files
+        for crrt_ind_start in tqdm(range(len(self.list_files))):
+            print("look at file {}".format(self.list_files[crrt_ind_start]))
+            crrt_file = [self.list_files[crrt_ind_start]]
+            self._process_entry(crrt_file)
 
         path_dump_metadata = folder.joinpath("sliding_metadata.pkl")
 
         with open(str(path_dump_metadata), "wb") as fh:
             pickle.dump(self.dict_metadata, fh)
 
-    def _process_entries(self, list_sliding_files, time_start_CHR, time_start_ADC):
-        """list_sliding_files: the files to look at
-        time_start_CHR: the (excluded, start after) time where to start dumping CHR
-        time_start_ADC: the (excluded, start after) time where to start dumping ADC.
-        Return the time of the last CHR and ADC dump."""
+    def _process_entry(self, list_file):
 
         # under which path to dump
-        path_dump = list_sliding_files[-1]
+        path_dump = list_file[0]
         filename = path_dump.stem + ".pkl"
         folder = path_dump.parent
         dump_path = folder.joinpath(filename)
@@ -514,37 +503,29 @@ class SlidingParser():
         dict_data["CHR"] = {}
 
         # parse
-        binary_folder_parser = BinaryFolderParser(list_files=list_sliding_files)
+        binary_folder_parser = BinaryFolderParser(list_files=list_file)
 
         # dump only the necessary part, and update the end of dumping times
         timestamps_ADC, data_ADC = binary_folder_parser.get_ADC_data()
-        idx_timestamp_start = np.searchsorted(np.array(timestamps_ADC), time_start_ADC, side="right")
 
-        dict_data["ADC"]["timestamps"] = timestamps_ADC[idx_timestamp_start:]
+        dict_data["ADC"]["timestamps"] = timestamps_ADC[:]
 
         for crrt_channel in range(len(data_ADC)):
-            dict_data["ADC"]["channel_{}".format(crrt_channel)] = data_ADC[crrt_channel][idx_timestamp_start:]
-
-        time_last_dumped_ADC = timestamps_ADC[-1]
+            dict_data["ADC"]["channel_{}".format(crrt_channel)] = data_ADC[crrt_channel][:]
 
         self.dict_metadata["ADC"]["time_limits_{}".format(filename)] = \
-            [timestamps_ADC[idx_timestamp_start], timestamps_ADC[-1]]
-
+            [timestamps_ADC[0], timestamps_ADC[-1]]
+            
         timestamps_CHR, data_CHR = binary_folder_parser.get_CHR_messages()
-        idx_timestamp_start = np.searchsorted(np.array(timestamps_CHR), time_start_CHR, side="right")
 
-        dict_data["CHR"]["timestamps"] = timestamps_CHR[idx_timestamp_start:-1]
-        dict_data["CHR"]["messages"] = data_CHR[idx_timestamp_start:-1]
-
-        time_last_dumped_CHR = timestamps_CHR[-2]
+        dict_data["CHR"]["timestamps"] = timestamps_CHR[:]
+        dict_data["CHR"]["messages"] = data_CHR[:]
 
         self.dict_metadata["CHR"]["time_limits_{}".format(filename)] = \
-            [timestamps_CHR[idx_timestamp_start], timestamps_CHR[-2]]
+            [min(timestamps_CHR), max(timestamps_CHR)]
 
         with open(str(dump_path), "wb") as fh:
             pickle.dump(dict_data, fh)
-
-        return (time_last_dumped_CHR, time_last_dumped_ADC)
 
 
 def GPRMC_extractor(dict_data):
