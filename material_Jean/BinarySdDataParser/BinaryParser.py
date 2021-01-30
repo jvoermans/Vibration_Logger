@@ -192,32 +192,26 @@ def filename_to_filenumber(filename):
     return filenumber
 
 
-def unwrapp_list_micros(list_micros, max_logging_delta=1000000 * 60 * 15, wrap_value=2**32-1):
+def unwrapp_list_micros(list_micros, wrap_value=2**32-1):
     """Given a list_micros of consecutive micros readings, possibly that have wrapped,
-    unwrapp them.
+    unwrapp them. Use the fact that, given the present setup, at most 1 wrapping per file,
+    and the duration of a file is less than half the wrapping time.
     """
     list_unwrapped_micros = []
 
-    crrt_unwrapping_value = 0
-
-    # at least the first entry is always unwrapped...
-    if len(list_micros) > 0:
-        previous_entry_unwrapped = list_micros[0]
-        list_unwrapped_micros.append(previous_entry_unwrapped)
-
-        for crrt_entry in list_micros[1:]:
-            crrt_entry_unwrapped = crrt_entry + crrt_unwrapping_value
-
-            if crrt_entry_unwrapped < previous_entry_unwrapped:
-                # close enough to a wrapping point: that was true wrapping
-                if (((previous_entry_unwrapped + max_logging_delta) % wrap_value) < (previous_entry_unwrapped % wrap_value)):
-                    crrt_entry_unwrapped += wrap_value
-                    crrt_unwrapping_value += wrap_value
-                else:
-                    raise ValueError("We observe wrapping, but we are far away from the wrapping point!")
-
-            list_unwrapped_micros.append(crrt_entry_unwrapped)
-            previous_entry_unwrapped = crrt_entry_unwrapped
+    min_micros = min(list_micros)
+    max_micros = max(list_micros)
+    
+    some_wrapping = False
+    
+    if ((min_micros < 1000000 * 60) and max_micros > (wrap_value - 1000000 * 60)):
+        some_wrapping = True
+        print("some micro wrapping is taking place")
+        
+    for crrt_micro in list_micros:
+        if ((crrt_micro < wrap_value / 2) and (some_wrapping)):
+            crrt_micro += wrap_value
+        list_unwrapped_micros.append(crrt_micro)
 
     return list_unwrapped_micros
 
