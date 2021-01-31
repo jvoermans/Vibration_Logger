@@ -30,7 +30,7 @@ def dump_keys(d, lvl=0):
 # path to the data to parse
 # path_to_folder_data = Path("./all_example_data/example_data_geophone_temperature/")
 # path_to_folder_data = Path("./all_example_data/example_with_channel_stats")
-path_to_folder_data = Path("./all_example_data/example_JR_fix_nbr_blocks_bug")
+path_to_folder_data = Path("/home/jrlab/Desktop/Current/test_vibration_loger/Test_5_Geo3/")
 
 # this will parse all files, and dump the parsed information in pkl files
 SlidingParser(path_to_folder_data)
@@ -43,7 +43,7 @@ with open(str(path_to_folder_data.joinpath("sliding_metadata.pkl")), "br") as fh
 pp(dict_metadata)
 
 # - the data corresponding to each file:
-with open(str(path_to_folder_data.joinpath("F00000014.pkl")), "br") as fh:
+with open(str(path_to_folder_data.joinpath("F00000008.pkl")), "br") as fh:
     dict_data_example = pickle.load(fh)
 
 # the keys of any data file should be self explanatory
@@ -65,6 +65,7 @@ for crrt_channel in range(5):
         dict_data_example["ADC"]["timestamps"], dict_data_example["ADC"]["channel_{}".format(crrt_channel)],
         label="channel {}".format(crrt_channel)
     )
+plt.legend()
 plt.show()
 
 # now can use some of the extractor tools to get message data
@@ -73,6 +74,14 @@ parsed_gprmc = GPRMC_extractor(dict_data_example)
 print()
 print(parsed_gprmc[0:2])
 
+channel_stats_timestamps, channel_stats_values = channel_stats_extractor(dict_data_example)
+
+print()
+for ind in range(1):
+    print("{} : {}".format(channel_stats_timestamps[ind],
+                           channel_stats_values[ind]))
+
+"""
 # at this stage, the usual interface to the parsed pynmea sentences will apply
 
 temperature_reading_timestamps, temperature_reading_values = temperatures_extractor(dict_data_example)
@@ -80,10 +89,5 @@ temperature_reading_timestamps, temperature_reading_values = temperatures_extrac
 for ind in range(20):
     print("{} : {}".format(temperature_reading_timestamps[ind],
                            temperature_reading_values[ind]))
+"""
 
-channel_stats_timestamps, channel_stats_values = channel_stats_extractor(dict_data_example)
-
-print()
-for ind in range(6):
-    print("{} : {}".format(channel_stats_timestamps[ind],
-                           channel_stats_values[ind]))
