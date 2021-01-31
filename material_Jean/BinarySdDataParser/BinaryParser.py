@@ -524,6 +524,10 @@ class SlidingParser():
         timestamps_ADC, data_ADC = binary_folder_parser.get_ADC_data()
         idx_timestamp_start = np.searchsorted(np.array(timestamps_ADC), time_start_ADC, side="right")
 
+        if idx_timestamp_start >= len(timestamps_ADC):
+            print("WARNING: non compatible timestamps on ADC; did you loose GPS fix?")
+            idx_timestamp_start = len(timestamps_ADC) - 1
+
         dict_data["ADC"]["timestamps"] = timestamps_ADC[idx_timestamp_start:]
 
         for crrt_channel in range(len(data_ADC)):
@@ -536,6 +540,10 @@ class SlidingParser():
 
         timestamps_CHR, data_CHR = binary_folder_parser.get_CHR_messages()
         idx_timestamp_start = np.searchsorted(np.array(timestamps_CHR), time_start_CHR, side="right")
+        
+        if idx_timestamp_start >= len(timestamps_CHR):
+            print("WARNING: non compatible timestamps on CHR; did you loose GPS fix?")
+            idx_timestamp_start = len(timestamps_CHR) - 1
 
         dict_data["CHR"]["timestamps"] = timestamps_CHR[idx_timestamp_start:-1]
         dict_data["CHR"]["messages"] = data_CHR[idx_timestamp_start:-1]
