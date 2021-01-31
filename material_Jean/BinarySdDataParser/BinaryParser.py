@@ -74,6 +74,7 @@ class BinaryFileParser():
 
     def __init__(self, path_to_file, n_ADC_channels=5):
         ras(isinstance(path_to_file, Path))
+        print("BinaryFileParser of {}".format(path_to_file))
 
         self.n_ADC_channels = n_ADC_channels
         self.path_to_file = path_to_file
@@ -197,6 +198,10 @@ def unwrapp_list_micros(list_micros, wrap_value=2**32-1):
     unwrapp them. Use the fact that, given the present setup, at most 1 wrapping per file,
     and the duration of a file is less than half the wrapping time.
     """
+    
+    if not list_micros:
+        return([])
+    
     list_unwrapped_micros = []
 
     min_micros = min(list_micros)
@@ -221,7 +226,8 @@ class BinaryFolderParser():
     parsing each file individually and putting the corresponding data
     together. Perform micros to utc datetime regression."""
     # the minimum number of PPS inputs for performing a meaningful fit
-    min_nbr_PPS_inputs = 5
+    min_nbr_PPS_inputs = 3
+    warning_nbr_PPS_inputs = 10
 
     def __init__(self, list_files=None, folder=None, n_ADC_channels=5, show_plots=False):
         self.show_plots = show_plots
@@ -350,6 +356,10 @@ class BinaryFolderParser():
                 crrt_entry.datestamp, crrt_entry.timestamp, tzinfo=datetime.timezone.utc
             ) for crrt_entry in self.dict_data["PPS_GPRMC_entries"]
         ]
+        
+        if len(list_PPS_datetimes) < self.warning_nbr_PPS_inputs:
+            print("WARNING: found only {} PPS datetimes; this may indicate no or bad quality GPS signal".format(len(list_PPS_datetimes)))
+            print("few PPS datetimes may reduce time regression quality")
 
         # enough PPS inputs to perform the fitting
         if len(list_PPS_datetimes) > self.min_nbr_PPS_inputs:

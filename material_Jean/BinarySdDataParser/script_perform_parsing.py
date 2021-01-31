@@ -30,7 +30,9 @@ def dump_keys(d, lvl=0):
 # path to the data to parse
 # path_to_folder_data = Path("./all_example_data/example_data_geophone_temperature/")
 # path_to_folder_data = Path("./all_example_data/example_with_channel_stats")
-path_to_folder_data = Path("/home/jrlab/Desktop/Current/test_vibration_loger/Test_5_Geo3/")
+path_to_folder_data = Path("/home/jrlab/Desktop/Current/test_vibration_loger/test_6/Testing_Data/Test_6_Geo3")
+print()
+print("look at files in: {}".format(path_to_folder_data))
 
 # this will parse all files, and dump the parsed information in pkl files
 SlidingParser(path_to_folder_data)
@@ -43,7 +45,8 @@ with open(str(path_to_folder_data.joinpath("sliding_metadata.pkl")), "br") as fh
 pp(dict_metadata)
 
 # - the data corresponding to each file:
-with open(str(path_to_folder_data.joinpath("F00000008.pkl")), "br") as fh:
+path_to_pkl_file = str(path_to_folder_data.joinpath("F00000015.pkl"))
+with open(path_to_pkl_file, "br") as fh:
     dict_data_example = pickle.load(fh)
 
 # the keys of any data file should be self explanatory
@@ -65,7 +68,8 @@ for crrt_channel in range(5):
         dict_data_example["ADC"]["timestamps"], dict_data_example["ADC"]["channel_{}".format(crrt_channel)],
         label="channel {}".format(crrt_channel)
     )
-plt.legend()
+plt.title(str(path_to_pkl_file))
+plt.legend(loc="lower right")
 plt.show()
 
 # now can use some of the extractor tools to get message data
