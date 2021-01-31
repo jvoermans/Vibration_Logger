@@ -72,7 +72,8 @@ plt.show()
 parsed_gprmc = GPRMC_extractor(dict_data_example)
 # for example these are the 2 first parsed GPRMC messages
 print()
-print(parsed_gprmc[0:2])
+for ind in range(1):
+    print("{}".format(parsed_gprmc[ind]))
 
 channel_stats_timestamps, channel_stats_values = channel_stats_extractor(dict_data_example)
 
