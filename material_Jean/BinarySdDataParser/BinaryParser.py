@@ -19,6 +19,10 @@ from raise_assert import ras
 
 import matplotlib.pyplot as plt
 
+from icecream import ic
+
+ic.configureOutput(prefix="", outputFunction=print)
+
 
 class BlockMetadata():
     def __init__(self, metatype, index, start, end):
@@ -539,6 +543,7 @@ class SlidingParser():
             [timestamps_ADC[idx_timestamp_start], timestamps_ADC[-1]]
 
         timestamps_CHR, data_CHR = binary_folder_parser.get_CHR_messages()
+        ic(timestamps_CHR)
         idx_timestamp_start = np.searchsorted(np.array(timestamps_CHR), time_start_CHR, side="right")
         
         if idx_timestamp_start >= len(timestamps_CHR):

@@ -8,7 +8,7 @@ import pickle
 
 from pprint import PrettyPrinter
 
-from BinaryParser import SlidingParser
+from BinaryParser import SlidingParser, BinaryFolderParser
 from BinaryParser import GPRMC_extractor, temperatures_extractor, channel_stats_extractor
 
 import matplotlib.pyplot as plt
@@ -35,8 +35,11 @@ path_to_folder_data = Path("./all_example_data/basic_example_data/")
 print()
 print("look at files in: {}".format(path_to_folder_data))
 
+list_files = sorted(list(path_to_folder_data.glob("F*.bin")))
+
 # this will parse all files, and dump the parsed information in pkl files
-SlidingParser(path_to_folder_data)
+# SlidingParser(path_to_folder_data)
+BinaryFolderParser(list_files)
 
 # the resulting data can be loaded directly from the pkl binary dumps. These are:
 # - the metadata:

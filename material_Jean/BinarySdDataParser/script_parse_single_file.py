@@ -24,7 +24,7 @@ def dump_keys(d, lvl=0, reentrant=False):
     if not reentrant:
         print("----")
 
-path_to_file = Path("./all_example_data/basic_example_data/F00000001.bin")
+path_to_file = Path("./all_example_data/basic_example_data/F00000002.bin")
 
 parsed_file = BinaryFileParser(path_to_file)
 dump_keys(parsed_file.dict_parsed_data)
