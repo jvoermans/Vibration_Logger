@@ -30,7 +30,8 @@ def dump_keys(d, lvl=0):
 # path to the data to parse
 # path_to_folder_data = Path("./all_example_data/example_data_geophone_temperature/")
 # path_to_folder_data = Path("./all_example_data/example_with_channel_stats")
-path_to_folder_data = Path("/home/jrlab/Desktop/Current/test_vibration_loger/test_6/Testing_Data/Test_6_Geo3")
+# path_to_folder_data = Path("/home/jrlab/Desktop/Current/test_vibration_loger/test_6/Testing_Data/Test_6_Geo3")
+path_to_folder_data = Path("./all_example_data/basic_example_data/")
 print()
 print("look at files in: {}".format(path_to_folder_data))
 
