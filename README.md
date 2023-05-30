@@ -1,3 +1,7 @@
+**Discontinued!!**: the content of this repository is mostly discontinued / old and untidy scripts and code that were used during development (though some of the code and scripts and discussions in issue may still be of interest for people looking for more insights in the development process, how the design decisions were made, etc). We **strongly recommend** to look at the updated and curated repository instead: https://github.com/jvoermans/Geophone_Logger .
+
+---
+
 Aim is to build a logger to measure sea ice vibrations induced by ice cracking/breaking.
 Vibrations are (based on literature in the 80ies) in the 50-200Hz frequency range.
 
